@@ -53,6 +53,18 @@
   .titik-warna { width: 26px; height: 26px; border-radius: 50%; border: 2px solid #3a3a46; padding: 0; }
   .titik-warna.aktif { border-color: #fc4c02; box-shadow: 0 0 0 2px #fc4c02 inset; }
   #panelStiker { border-color: #fc4c02; }
+  #viewEditor { padding-bottom: 86px; }
+  .sheet { position: fixed; left: 0; right: 0; bottom: 57px; max-height: 62vh; overflow-y: auto;
+    background: #17171d; border-top: 1px solid #33333e; border-radius: 18px 18px 0 0;
+    padding: 6px 16px 20px; z-index: 45; transform: translateY(112%); transition: transform .25s ease;
+    box-shadow: 0 -12px 32px rgba(0,0,0,.5); }
+  .sheet.buka { transform: none; }
+  .sheet .judul-seksi:first-child { margin-top: 10px; }
+  #barBawah { position: fixed; left: 0; right: 0; bottom: 0; height: 57px; z-index: 50;
+    display: flex; background: #121216; border-top: 1px solid #2a2a33; }
+  #barBawah button { flex: 1; background: none; color: #c9c9d2; font-size: 12.5px; border-radius: 0; }
+  #barBawah button.aktif { color: #fc4c02; }
+  #barBawah button.simpan { color: #fff; background: #fc4c02; font-size: 13.5px; }
   .baris-slot { display: flex; align-items: center; gap: 9px; margin-bottom: 7px; }
   .baris-slot span { font-size: 11px; font-weight: 700; color: #9a9aa5; width: 46px; letter-spacing: .5px; }
   .baris-slot select { flex: 1; padding: 9px 10px; border-radius: 9px; border: 1px solid #33333e; background: #121216; color: #fff; font-size: 13px; font-family: inherit; }
@@ -116,6 +128,7 @@
     <button class="btn-biasa btn-kecil" id="btnKembali">← Aktivitas</button>
   </div>
 
+  <div class="sheet" id="sheetTemplate">
   <div class="judul-seksi">TEMPLATE</div>
   <div class="deret" id="deretTemplate">
     <button class="btn-biasa chip aktif" data-tpl="pursuit">Pursuit</button>
@@ -123,6 +136,9 @@
     <button class="btn-biasa chip" data-tpl="poster">Poster</button>
   </div>
 
+  </div>
+
+  <div class="sheet" id="sheetAtur">
   <div class="judul-seksi">TAMPILKAN</div>
   <div class="deret" id="deretToggle">
     <label class="tog"><input type="checkbox" data-el="judul" checked> Judul</label>
@@ -148,6 +164,9 @@
     <input type="range" id="inTebal" min="30" max="300" value="100">
   </div>
 
+  </div>
+
+  <div class="sheet" id="sheetGaleri">
   <div class="judul-seksi">GALERI STIKER — ketuk untuk menambahkan ke gambar</div>
   <div class="deret" id="deretTabGaleri" style="margin-bottom:9px">
     <button class="btn-biasa chip aktif" data-gtab="single">Single</button>
@@ -155,6 +174,7 @@
   </div>
   <div class="galeri" id="galeriGrid"></div>
   <p class="kecil" style="margin-top:8px">Stiker bisa ditumpuk banyak sekaligus. Ketuk stiker di gambar untuk menggeser &amp; mengubah font, warna, dan latarnya.</p>
+  </div>
 
   <div class="card" id="panelStiker" style="display:none; margin-top:14px">
     <h2>Stiker: <span id="namaStiker">—</span></h2>
@@ -190,8 +210,15 @@
     </div>
   </div>
 
-  <button class="btn-utama" id="btnSimpan">⬇ Simpan PNG</button>
+  <button class="btn-utama" id="btnSimpan" style="display:none">⬇ Simpan PNG</button>
   <p class="kecil" style="margin-top:8px">Tanpa foto = PNG overlay transparan. Dengan foto = gambar jadi, siap posting.</p>
+
+  <div id="barBawah">
+    <button data-sheet="sheetTemplate">🎨 Template</button>
+    <button data-sheet="sheetGaleri">✦ Stiker</button>
+    <button data-sheet="sheetAtur">⚙️ Atur</button>
+    <button class="simpan" id="btnSimpan2">⬇ Simpan</button>
+  </div>
 </div>
 
 <script>
@@ -1076,8 +1103,29 @@ function bukaEditor(akt){ S.akt = akt; S.pilih = null;
   $("#viewBeranda").classList.remove("aktif"); $("#viewEditor").classList.add("aktif");
   window.scrollTo(0,0);
   $("#blokTebal").style.display = "none";
-  bangunGaleri(); sinkronPanelStiker(); gambar();
+  if(typeof tutupSheet === "function") tutupSheet();
+  try{ bangunGaleri(); }catch(e){ /* galeri tak boleh menggagalkan editor */ }
+  sinkronPanelStiker(); gambar();
   ambilCuaca(akt); if(!S.profil) ambilProfil(); }
+
+/* ================= panel geser (bottom sheet) ================= */
+$("#sheetAtur").appendChild($("#panelStiker"));
+function tutupSheet(){
+  document.querySelectorAll(".sheet").forEach(sh=> sh.classList.remove("buka"));
+  document.querySelectorAll("#barBawah [data-sheet]").forEach(b=> b.classList.remove("aktif"));
+}
+function bukaSheet(id){
+  const target = document.getElementById(id);
+  const sudah = target.classList.contains("buka");
+  tutupSheet();
+  if(!sudah){ target.classList.add("buka");
+    document.querySelectorAll("#barBawah [data-sheet]").forEach(b=>
+      b.classList.toggle("aktif", b.dataset.sheet === id)); }
+}
+$("#barBawah").addEventListener("click", e=>{
+  const b = e.target.closest("[data-sheet]"); if(b) bukaSheet(b.dataset.sheet);
+});
+$("#btnSimpan2").onclick = ()=> $("#btnSimpan").click();
 
 /* ================= galeri & panel stiker ================= */
 function tambahStiker(jenis){
@@ -1090,6 +1138,7 @@ function tambahStiker(jenis){
   $("#namaElemen").textContent = def.nama.toUpperCase();
   $("#inUkuran").value = 100;
   $("#blokTebal").style.display = "none";
+  tutupSheet();
   sinkronPanelStiker(); gambar();
 }
 function bangunGaleri(){
@@ -1102,11 +1151,11 @@ function bangunGaleri(){
     tile.appendChild(c); tile.appendChild(nm);
     tile.onclick = ()=> tambahStiker(def.id);
     grid.appendChild(tile);
-    const pc = c.getContext("2d");
-    pc.fillStyle = "#101014"; pc.fillRect(0, 0, 330, 184);
     const inst = { uid: 0, jenis: def.id, skala: 1, font: "", warna: def.warna, latar: "none",
       pilih: def.pilih ? def.pilih.slice() : null, slot: def.slot ? def.slot.slice() : null };
     try{
+      const pc = c.getContext("2d");
+      pc.fillStyle = "#101014"; pc.fillRect(0, 0, 330, 184);
       const g = def.geo(1, inst);
       inst.skala = Math.max(Math.min(300/g.w, 150/g.h), .05);
       gambarSatuStiker(pc, inst, 165, 92, null);
