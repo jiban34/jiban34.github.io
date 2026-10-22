@@ -123,6 +123,7 @@
 
   <div class="deret" style="justify-content:center; margin-bottom:6px">
     <button class="btn-biasa btn-kecil" id="btnFoto">📷 Pilih Foto</button>
+    <button class="btn-biasa btn-kecil" id="btnGeserFoto">🖼 Atur Foto</button>
     <input type="file" id="inFoto" accept="image/*" style="display:none">
     <button class="btn-biasa btn-kecil" id="btnReset">↺ Reset Posisi</button>
     <button class="btn-biasa btn-kecil" id="btnKembali">← Aktivitas</button>
@@ -130,6 +131,7 @@
 
   <div class="sheet" id="sheetTemplate">
   <div class="judul-seksi">TEMPLATE</div>
+  <p class="kecil" style="margin-bottom:10px">Template = <b>susunan otomatis elemen bawaan</b> (judul, tanggal, rute, jarak, statistik, PR) — pilih gaya tampilannya di sini. Beda dengan <b>Stiker</b>: stiker kamu tambah sendiri secara bebas dari galeri dan bisa ditumpuk di mana saja.</p>
   <div class="deret" id="deretTemplate">
     <button class="btn-biasa chip aktif" data-tpl="pursuit">Pursuit</button>
     <button class="btn-biasa chip" data-tpl="minimal">Minimal</button>
@@ -162,6 +164,39 @@
   <div id="blokTebal" style="display:none">
     <div class="judul-seksi">KETEBALAN GARIS RUTE — <span id="lblTebal">100%</span></div>
     <input type="range" id="inTebal" min="30" max="300" value="100">
+  </div>
+
+  <div class="judul-seksi">RATA POSISI ELEMEN TERPILIH</div>
+  <div class="deret" id="deretRata">
+    <button class="btn-biasa chip" data-rata="kiri">⬅ Kiri</button>
+    <button class="btn-biasa chip" data-rata="tengah">⬌ Tengah</button>
+    <button class="btn-biasa chip" data-rata="kanan">➡ Kanan</button>
+  </div>
+
+  <div id="blokFoto" style="display:none">
+    <div class="judul-seksi">ZOOM FOTO LATAR — <span id="lblZoomFoto">100%</span></div>
+    <input type="range" id="inZoomFoto" min="100" max="250" value="100">
+    <p class="kecil">Geser foto langsung di gambar untuk mengatur potongan (crop)-nya.</p>
+  </div>
+
+  <div id="blokStats" style="display:none">
+    <div class="judul-seksi">GAYA FONT STATISTIK</div>
+    <label class="lbl">JENIS FONT</label>
+    <div class="deret" id="deretFamStats">
+      <button class="btn-biasa chip" data-sfam="sans">Sans</button>
+      <button class="btn-biasa chip" data-sfam="condensed">Condensed</button>
+      <button class="btn-biasa chip" data-sfam="serif">Serif</button>
+      <button class="btn-biasa chip" data-sfam="mono">Mono</button>
+      <button class="btn-biasa chip" data-sfam="tulis">Tulisan Tangan</button>
+    </div>
+    <label class="lbl">GAYA</label>
+    <div class="deret" id="deretGayaStats">
+      <button class="btn-biasa chip" data-sgaya="tebal">Tebal</button>
+      <button class="btn-biasa chip" data-sgaya="normal">Normal</button>
+      <button class="btn-biasa chip" data-sgaya="miring">Miring (Italic)</button>
+    </div>
+    <label class="lbl">WARNA FONT</label>
+    <div class="deret" id="deretWarnaStats"></div>
   </div>
 
   </div>
@@ -267,6 +302,9 @@ const S = {
   cuaca: null,          // {suhu, angin, arah, ikon, label} dari Open-Meteo
   avatarImg: null,      // Image foto profil Strava
   profil: null,         // {nama, user, kota} atlet Strava
+  fotoGeser: { dx:0, dy:0, zoom:1 },  // posisi & zoom crop foto latar
+  modeFoto: false,      // mode geser foto aktif
+  avatarAman: false,    // true bila avatar termuat via blob (aman untuk ekspor PNG)
 };
 let stkUid = 0;
 function geserEl(id){ const t = S.geser[S.tpl] || (S.geser[S.tpl]={});
@@ -430,8 +468,18 @@ const TPL = {
              stats:{x:.5,y:.78,s:1.05}, pr:{x:.5,y:.868,s:.85}, judul:{x:.5,y:.93,s:1} },
 };
 function font(px, wgt){ return wgt+" "+px+"px Montserrat, Arial, sans-serif"; }
+function fontGaya(px, fam, wgt, miring){
+  if(fam === "serif") return "italic 700 "+px+"px 'Playfair Display', Georgia, serif";
+  const pre = miring ? "italic " : "";
+  if(fam === "condensed") return pre+px+"px Anton, 'Arial Narrow', sans-serif";
+  if(fam === "mono") return pre+wgt+" "+px+"px 'Space Mono', monospace";
+  if(fam === "tulis") return pre+"700 "+px+"px Caveat, cursive";
+  return pre+wgt+" "+px+"px Montserrat, Arial, sans-serif";
+}
+let FONT_OVERRIDE = null;
 function teksTengah(x, y, teks, px, wgt, warna, spasi=0){
-  ctx.font = font(px, wgt); ctx.fillStyle = warna; ctx.textBaseline = "middle";
+  ctx.font = FONT_OVERRIDE ? FONT_OVERRIDE(px, wgt) : font(px, wgt);
+  ctx.fillStyle = warna; ctx.textBaseline = "middle";
   if(!spasi){ ctx.textAlign="center"; ctx.fillText(teks, x, y);
     const w = ctx.measureText(teks).width; return {x:x-w/2, y:y-px/2, w, h:px}; }
   const huruf=[...teks]; const lebar=huruf.map(c=>ctx.measureText(c).width);
@@ -469,9 +517,13 @@ function gambarStats(cx, cy, skala, rataKiri){
   const item = [["WAKTU", fmtWaktu(a.waktu)], ["ELEVASI", Math.round(a.elev)+" m"],
     ["KECEPATAN", koma(a.kec,1)+" km/j"]];
   if(a.hr) item.push(["AVG HR", a.hr+" bpm"]);
-  const warna = WARNA[S.warna];
+  const gst = geserEl("stats");
+  const famS = gst.stFam || "sans", gayaS = gst.stGaya || "tebal";
+  const wgtS = gayaS === "normal" ? 500 : gayaS === "miring" ? 600 : 800;
+  const warna = gst.stWarna || WARNA[S.warna];
+  FONT_OVERRIDE = (px)=> fontGaya(px, famS, wgtS, gayaS === "miring");
   ctx.save();
-  ctx.shadowColor = S.warna==="hitam" ? "rgba(255,255,255,.35)" : "rgba(0,0,0,.5)";
+  ctx.shadowColor = terang(warna) ? "rgba(0,0,0,.5)" : "rgba(255,255,255,.35)";
   if(S.tpl==="poster" || !rataKiri){
     const cw = 250*skala, total = cw*item.length;
     let x0 = cx-total/2;
@@ -480,15 +532,16 @@ function gambarStats(cx, cy, skala, rataKiri){
       teksTengah(x0+cw/2, cy-28*skala, lb, 25*skala, 600, warna, 4*skala);
       teksTengah(x0+cw/2, cy+26*skala, vl, 44*skala, 700, warna);
       x0 += cw; });
-    ctx.restore(); return kotak;
+    ctx.restore(); FONT_OVERRIDE = null; return kotak;
   }
   // minimal: rata kiri, label & nilai sebaris ringkas
   const baris = item.map(([lb,vl])=>vl).join("   •   ");
-  ctx.font = font(40*skala,700);
+  ctx.font = fontGaya(40*skala, famS, wgtS, gayaS === "miring");
   const w = ctx.measureText(baris).width;
   ctx.fillStyle = warna; ctx.textAlign="left"; ctx.textBaseline="middle";
   ctx.fillText(baris, cx, cy);
   ctx.restore();
+  FONT_OVERRIDE = null;
   return { x:cx, y:cy-26*skala, w, h:52*skala };
 }
 const MEDALI = { 1:"🏆", 2:"🥈", 3:"🥉" };
@@ -855,7 +908,8 @@ STK.push(
      return { w, h, draw(C,x0,y0){ let y = y0;
        // header: avatar + nama + tanggal
        C.save(); jejakBulat(C, {x:x0, y:y+4*s, w:104*s, h:104*s}, 24*s); C.clip();
-       if(S.avatarImg){ const im = S.avatarImg, r = Math.max(104*s/im.width, 104*s/im.height);
+       const imAv = (typeof imgAvatar === "function") ? imgAvatar() : null;
+       if(imAv){ const im = imAv, r = Math.max(104*s/im.width, 104*s/im.height);
          C.drawImage(im, x0+(104*s-im.width*r)/2, y+4*s+(104*s-im.height*r)/2, im.width*r, im.height*r); }
        else { C.fillStyle = "#fc4c02"; C.fillRect(x0, y+4*s, 104*s, 104*s);
          tks(C, x0+52*s, y+56*s, (namaProfil||"A").charAt(0), 56*s, fam, 800, "#ffffff"); }
@@ -902,7 +956,8 @@ STK.push(
      const w = 174*s + Math.max(ukTeks(nama, 54*s, fam, 800), ukTeks(sub, 30*s, fam, 700, 3*s)) + 6*s, h = 150*s;
      return { w, h, draw(C,x0,y0){ const cx = x0+75*s, cy = y0+75*s;
        C.save(); C.beginPath(); C.arc(cx, cy, 73*s, 0, 7); C.clip();
-       if(S.avatarImg){ const im = S.avatarImg, r = Math.max(146*s/im.width, 146*s/im.height);
+       const imAv2 = (typeof imgAvatar === "function") ? imgAvatar() : null;
+       if(imAv2){ const im = imAv2, r = Math.max(146*s/im.width, 146*s/im.height);
          C.drawImage(im, cx-im.width*r/2, cy-im.height*r/2, im.width*r, im.height*r); }
        else { C.fillStyle = "#fc4c02"; C.fillRect(cx-73*s, cy-73*s, 146*s, 146*s);
          tks(C, cx, cy+2*s, (nama||"A").charAt(0), 68*s, fam, 800, "#ffffff"); }
@@ -945,10 +1000,12 @@ function gambarSatuStiker(C, inst, cx, cy, snap){
 function gambar(){
   ctx.clearRect(0,0,W,H);
   S.kotak = {};
-  if(S.foto){ // cover-fit
-    const im = S.foto, r = Math.max(W/im.width, H/im.height);
+  FONT_OVERRIDE = null;
+  if(S.foto){ // cover-fit (auto-crop) + geser/zoom crop
+    const im = S.foto, fg = S.fotoGeser;
+    const r = Math.max(W/im.width, H/im.height) * (fg.zoom || 1);
     const w = im.width*r, h = im.height*r;
-    ctx.drawImage(im, (W-w)/2, (H-h)/2, w, h);
+    ctx.drawImage(im, (W-w)/2 + fg.dx*W, (H-h)/2 + fg.dy*H, w, h);
   }
   const a = S.akt; if(!a) return;
   const tpl = TPL[S.tpl], warna = WARNA[S.warna];
@@ -995,10 +1052,13 @@ function gambar(){
     ctx.strokeRect(k.x-10, k.y-10, k.w+20, k.h+20); ctx.restore(); }
 }
 /* drag */
-let seret = null, EKSPOR = false;
+let seret = null, seretFoto = null, EKSPOR = false;
 function posSentuh(e){ const r = cv.getBoundingClientRect();
   return { x:(e.clientX-r.left)/r.width*W, y:(e.clientY-r.top)/r.height*H }; }
 cv.addEventListener("pointerdown", e=>{
+  if(S.modeFoto){ const p0 = posSentuh(e);
+    seretFoto = { mx:p0.x, my:p0.y, dx:S.fotoGeser.dx, dy:S.fotoGeser.dy };
+    cv.setPointerCapture(e.pointerId); return; }
   const p = posSentuh(e);
   const id = Object.keys(S.kotak).reverse().find(id=>{
     const k = S.kotak[id]; return p.x>k.x-16 && p.x<k.x+k.w+16 && p.y>k.y-16 && p.y<k.y+k.h+16; });
@@ -1016,17 +1076,26 @@ cv.addEventListener("pointerdown", e=>{
       const tv = Math.round((geserEl("rute").tebal || 1)*100);
       $("#inTebal").value = tv; $("#lblTebal").textContent = tv+"%";
     } else blokT.style.display = "none";
+    const blokSt = $("#blokStats");
+    if(!inst && id === "stats"){ blokSt.style.display = "block"; sinkronBlokStats(); }
+    else blokSt.style.display = "none";
+    if(S.modeFoto) setModeFoto(false);
     sinkronPanelStiker();
     cv.setPointerCapture(e.pointerId); gambar(); }
 });
-cv.addEventListener("pointermove", e=>{ if(!seret) return;
+cv.addEventListener("pointermove", e=>{
+  if(seretFoto){ const p = posSentuh(e);
+    S.fotoGeser.dx = Math.max(-.6, Math.min(.6, seretFoto.dx + (p.x-seretFoto.mx)/W));
+    S.fotoGeser.dy = Math.max(-.6, Math.min(.6, seretFoto.dy + (p.y-seretFoto.my)/H));
+    gambar(); return; }
+  if(!seret) return;
   const p = posSentuh(e);
   const inst = stikerDariId(seret.id);
   if(inst){ inst.x = seret.x0 + (p.x-seret.mx)/W; inst.y = seret.y0 + (p.y-seret.my)/H; }
   else { const g = geserEl(seret.id);
     g.dx = seret.dx + (p.x-seret.mx)/W; g.dy = seret.dy + (p.y-seret.my)/H; }
   gambar(); });
-["pointerup","pointercancel"].forEach(ev=> cv.addEventListener(ev, ()=> seret=null));
+["pointerup","pointercancel"].forEach(ev=> cv.addEventListener(ev, ()=>{ seret=null; seretFoto=null; }));
 $("#inUkuran").oninput = e=>{ if(!S.pilih) return;
   const inst = stikerDariId(S.pilih);
   if(inst) inst.skala = e.target.value/100;
@@ -1034,10 +1103,54 @@ $("#inUkuran").oninput = e=>{ if(!S.pilih) return;
   gambar(); };
 $("#inTebal").oninput = e=>{ geserEl("rute").tebal = e.target.value/100;
   $("#lblTebal").textContent = e.target.value+"%"; gambar(); };
+function sebarRata(mode){ const id = S.pilih; if(!id) return;
+  const k = S.kotak[id]; if(!k) return;
+  const M = 54; let cxT = W/2;
+  if(mode === "kiri") cxT = M + k.w/2;
+  else if(mode === "kanan") cxT = W - M - k.w/2;
+  const dF = (cxT - (k.x + k.w/2))/W;
+  const inst = stikerDariId(id);
+  if(inst) inst.x += dF; else geserEl(id).dx += dF;
+  gambar(); }
+$("#deretRata").onclick = e=>{ const b = e.target.closest("[data-rata]");
+  if(b) sebarRata(b.dataset.rata); };
+function setModeFoto(on){ S.modeFoto = on;
+  $("#btnGeserFoto").classList.toggle("aktif", on);
+  $("#blokFoto").style.display = on ? "block" : "none";
+  if(on){ $("#namaElemen").textContent = "FOTO LATAR — geser di gambar untuk mengatur crop";
+    const zv = Math.round(S.fotoGeser.zoom*100);
+    $("#inZoomFoto").value = zv; $("#lblZoomFoto").textContent = zv+"%"; } }
+$("#btnGeserFoto").onclick = ()=>{ if(!S.foto){ $("#inFoto").click(); return; }
+  setModeFoto(!S.modeFoto); if(S.modeFoto) tutupSheet(); };
+$("#inZoomFoto").oninput = e=>{ S.fotoGeser.zoom = e.target.value/100;
+  $("#lblZoomFoto").textContent = e.target.value+"%"; gambar(); };
 $("#deretTemplate").onclick = e=>{ const b = e.target.closest("[data-tpl]"); if(!b) return;
   S.tpl = b.dataset.tpl;
   document.querySelectorAll("#deretTemplate .chip").forEach(c=>c.classList.toggle("aktif", c===b));
+  if(S.pilih === "stats") sinkronBlokStats();
+  if(S.pilih === "rute"){ const tv = Math.round((geserEl("rute").tebal || 1)*100);
+    $("#inTebal").value = tv; $("#lblTebal").textContent = tv+"%"; }
   gambar(); };
+function sinkronBlokStats(){ const g = geserEl("stats");
+  document.querySelectorAll("#deretFamStats .chip").forEach(c=>
+    c.classList.toggle("aktif", c.dataset.sfam === (g.stFam || "sans")));
+  document.querySelectorAll("#deretGayaStats .chip").forEach(c=>
+    c.classList.toggle("aktif", c.dataset.sgaya === (g.stGaya || "tebal")));
+  document.querySelectorAll("#deretWarnaStats .titik-warna").forEach(c=>
+    c.classList.toggle("aktif", c.dataset.shex === (g.stWarna || ""))); }
+$("#deretFamStats").onclick = e=>{ const b = e.target.closest("[data-sfam]"); if(!b) return;
+  geserEl("stats").stFam = b.dataset.sfam; sinkronBlokStats(); gambar(); };
+$("#deretGayaStats").onclick = e=>{ const b = e.target.closest("[data-sgaya]"); if(!b) return;
+  geserEl("stats").stGaya = b.dataset.sgaya; sinkronBlokStats(); gambar(); };
+$("#deretWarnaStats").onclick = e=>{ const b = e.target.closest("[data-shex]"); if(!b) return;
+  geserEl("stats").stWarna = b.dataset.shex || ""; sinkronBlokStats(); gambar(); };
+(function(){ const el = $("#deretWarnaStats");
+  const tema = document.createElement("button");
+  tema.className = "btn-biasa chip"; tema.dataset.shex = ""; tema.textContent = "Ikut Tema";
+  el.appendChild(tema);
+  Object.entries(PALET).forEach(([nama, hex])=>{ const b = document.createElement("button");
+    b.className = "titik-warna"; b.dataset.shex = hex; b.title = nama; b.style.background = hex;
+    el.appendChild(b); }); })();
 $("#deretToggle").onchange = e=>{ const id = e.target.dataset.el;
   S.tampil[id] = e.target.checked; gambar(); };
 $("#deretWarna").onclick = e=>{ const b = e.target.closest("[data-warna]"); if(!b) return;
@@ -1045,10 +1158,13 @@ $("#deretWarna").onclick = e=>{ const b = e.target.closest("[data-warna]"); if(!
   document.querySelectorAll("#deretWarna .chip").forEach(c=>c.classList.toggle("aktif", c===b));
   gambar(); };
 $("#btnReset").onclick = ()=>{ S.geser[S.tpl] = {}; S.pilih = null;
-  $("#blokTebal").style.display = "none"; sinkronPanelStiker(); gambar(); };
+  S.fotoGeser = { dx:0, dy:0, zoom:1 }; setModeFoto(false);
+  $("#blokTebal").style.display = "none"; $("#blokStats").style.display = "none";
+  sinkronPanelStiker(); gambar(); };
 $("#btnFoto").onclick = ()=> $("#inFoto").click();
 $("#inFoto").onchange = e=>{ const f = e.target.files[0]; if(!f) return;
-  const im = new Image(); im.onload = ()=>{ S.foto = im; gambar(); };
+  const im = new Image();
+  im.onload = ()=>{ S.foto = im; S.fotoGeser = { dx:0, dy:0, zoom:1 }; setModeFoto(false); gambar(); };
   im.src = URL.createObjectURL(f); };
 $("#btnKembali").onclick = ()=>{ $("#viewEditor").classList.remove("aktif");
   $("#viewBeranda").classList.add("aktif"); window.scrollTo(0,0); };
@@ -1075,28 +1191,47 @@ async function ambilCuaca(akt){
     bangunGaleri(); if(S.stiker.some(i=> i.jenis === "cuaca")) gambar();
   }catch(e){ /* cuaca opsional */ }
 }
+function imgAvatar(){ // foto profil hanya digambar bila aman untuk render ini
+  return (S.avatarImg && (S.avatarAman || !EKSPOR)) ? S.avatarImg : null;
+}
+async function muatAvatar(url){
+  // Jalur 1: fetch -> blob (butuh CORS; CDN Strava tidak mengirimnya, biasanya gagal)
+  try{
+    const r = await fetch(url);
+    if(r.ok){ const b = await r.blob();
+      const im = new Image();
+      await new Promise((res, rej)=>{ im.onload = res; im.onerror = rej;
+        im.src = URL.createObjectURL(b); });
+      S.avatarImg = im; S.avatarAman = true; return; }
+  }catch(e){ /* lanjut jalur 2 */ }
+  // Jalur 2: muat langsung (tampil di editor; saat ekspor diganti inisial agar PNG tak gagal)
+  try{
+    const im = new Image();
+    await new Promise((res, rej)=>{ im.onload = res; im.onerror = rej; im.src = url; });
+    S.avatarImg = im; S.avatarAman = false;
+  }catch(e){ /* avatar tetap inisial */ }
+}
 async function ambilProfil(){
   try{
     const cfg0 = LS.k; if(!cfg0 || !cfg0.access) return;
-    if(cfg0.foto && !S.profil) S.profil = { nama: cfg0.atlet, user: cfg0.user, kota: cfg0.kota };
-    const tok = await tokenValid(); if(!tok) return;
-    const r = await fetch("https://www.strava.com/api/v3/athlete",
-      { headers:{ Authorization: "Bearer "+tok } });
-    if(!r.ok) return;
-    const a = await r.json();
-    const c2 = LS.k || {};
-    c2.atlet = ((a.firstname||"")+" "+(a.lastname||"")).trim() || c2.atlet;
-    c2.user = a.username || c2.user; c2.foto = a.profile || c2.foto;
-    c2.kota = [a.city, a.state].filter(Boolean).join(", ") || c2.kota;
-    LS.k = c2;
-    S.profil = { nama: c2.atlet, user: c2.user, kota: c2.kota };
-    $("#statusAkun").textContent = "Strava: "+(c2.atlet || "terhubung");
-    if(c2.foto && !S.avatarImg){
-      const rb = await fetch(c2.foto);
-      if(rb.ok){ const bl = await rb.blob(); const im = new Image();
-        im.onload = ()=>{ S.avatarImg = im; if(S.akt){ gambar(); bangunGaleri(); } };
-        im.src = URL.createObjectURL(bl); }
+    if(cfg0.atlet && !S.profil) S.profil = { nama: cfg0.atlet, user: cfg0.user, kota: cfg0.kota };
+    if(!S.profil){
+      const tok = await tokenValid(); if(!tok) return;
+      const r = await fetch("https://www.strava.com/api/v3/athlete",
+        { headers:{ Authorization: "Bearer "+tok } });
+      if(!r.ok) return;
+      const a = await r.json();
+      const c2 = LS.k || {};
+      c2.atlet = ((a.firstname||"")+" "+(a.lastname||"")).trim() || c2.atlet;
+      c2.user = a.username || c2.user; c2.foto = a.profile || c2.foto;
+      c2.kota = [a.city, a.state].filter(Boolean).join(", ") || c2.kota;
+      LS.k = c2;
+      S.profil = { nama: c2.atlet, user: c2.user, kota: c2.kota };
+      $("#statusAkun").textContent = "Strava: "+(c2.atlet || "terhubung");
     }
+    const foto = (LS.k || {}).foto;
+    if(foto && !S.avatarImg){ await muatAvatar(foto);
+      if(S.akt){ gambar(); bangunGaleri(); } }
   }catch(e){ /* profil opsional */ }
 }
 function bukaEditor(akt){ S.akt = akt; S.pilih = null;
@@ -1104,10 +1239,12 @@ function bukaEditor(akt){ S.akt = akt; S.pilih = null;
   $("#viewBeranda").classList.remove("aktif"); $("#viewEditor").classList.add("aktif");
   window.scrollTo(0,0);
   $("#blokTebal").style.display = "none";
+  $("#blokStats").style.display = "none";
+  setModeFoto(false);
   if(typeof tutupSheet === "function") tutupSheet();
   try{ bangunGaleri(); }catch(e){ /* galeri tak boleh menggagalkan editor */ }
   sinkronPanelStiker(); gambar();
-  ambilCuaca(akt); if(!S.profil) ambilProfil(); }
+  ambilCuaca(akt); if(!S.avatarImg) ambilProfil(); }
 
 /* ================= panel geser (bottom sheet) ================= */
 $("#sheetAtur").appendChild($("#panelStiker"));
