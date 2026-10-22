@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Overlay Ride — Template Overlay Strava</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: 'Montserrat', Arial, sans-serif; background: #101014; color: #f2f2f5; min-height: 100vh; }
+  header { padding: 16px 18px 8px; display: flex; align-items: center; justify-content: space-between; }
+  header h1 { font-size: 20px; font-weight: 800; letter-spacing: .5px; }
+  header h1 span { color: #fc4c02; }
+  #statusAkun { font-size: 11px; color: #9a9aa5; text-align: right; }
+  .view { display: none; padding: 8px 16px 40px; }
+  .view.aktif { display: block; }
+  .card { background: #1b1b21; border: 1px solid #2a2a33; border-radius: 14px; padding: 16px; margin-bottom: 14px; }
+  .card h2 { font-size: 14px; font-weight: 700; margin-bottom: 8px; }
+  .card p { font-size: 12px; color: #b9b9c2; line-height: 1.55; margin-bottom: 10px; }
+  .card p b { color: #fff; }
+  label.lbl { display: block; font-size: 11px; font-weight: 600; color: #9a9aa5; margin: 10px 0 4px; letter-spacing: .6px; }
+  input[type=text], input[type=password] { width: 100%; padding: 11px 12px; border-radius: 10px; border: 1px solid #33333e; background: #121216; color: #fff; font-size: 14px; font-family: inherit; }
+  button { font-family: inherit; cursor: pointer; border: none; border-radius: 11px; font-weight: 700; }
+  .btn-utama { background: #fc4c02; color: #fff; padding: 13px 18px; font-size: 14px; width: 100%; margin-top: 12px; }
+  .btn-utama:active { background: #d63f00; }
+  .btn-biasa { background: #26262e; color: #eee; padding: 11px 14px; font-size: 13px; border: 1px solid #34343f; }
+  .btn-biasa.aktif { background: #fc4c02; border-color: #fc4c02; color: #fff; }
+  .btn-kecil { padding: 8px 12px; font-size: 12px; }
+  .deret { display: flex; gap: 8px; flex-wrap: wrap; }
+  .akt { display: flex; justify-content: space-between; align-items: center; padding: 13px 14px; background: #1b1b21; border: 1px solid #2a2a33; border-radius: 12px; margin-bottom: 9px; cursor: pointer; }
+  .akt:active { border-color: #fc4c02; }
+  .akt .nm { font-size: 13.5px; font-weight: 700; }
+  .akt .dt { font-size: 11px; color: #9a9aa5; margin-top: 2px; }
+  .akt .km { font-size: 16px; font-weight: 800; color: #fc4c02; white-space: nowrap; margin-left: 10px; }
+  #bungkusCanvas { position: relative; width: 100%; max-width: 560px; margin: 4px auto 12px; border-radius: 14px; overflow: hidden;
+    background: repeating-conic-gradient(#23232a 0% 25%, #1a1a20 0% 50%) 0 0/26px 26px; touch-action: none; }
+  canvas { display: block; width: 100%; height: auto; }
+  .chip { padding: 9px 14px; border-radius: 999px; font-size: 12.5px; }
+  .tog { display: flex; align-items: center; gap: 7px; background: #26262e; border: 1px solid #34343f; padding: 8px 11px; border-radius: 999px; font-size: 12px; font-weight: 600; cursor: pointer; user-select: none; }
+  .tog input { accent-color: #fc4c02; width: 15px; height: 15px; }
+  input[type=range] { width: 100%; accent-color: #fc4c02; }
+  .kecil { font-size: 11px; color: #9a9aa5; line-height: 1.5; }
+  .pesan { font-size: 12.5px; padding: 10px 12px; border-radius: 10px; margin-bottom: 12px; display: none; }
+  .pesan.err { background: #3a1620; color: #ff9db0; display: block; }
+  .pesan.ok { background: #123324; color: #8fe6b0; display: block; }
+  .judul-seksi { font-size: 12px; font-weight: 700; letter-spacing: .8px; color: #9a9aa5; margin: 16px 0 8px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>OVERLAY<span>RIDE</span></h1>
+  <div id="statusAkun">Strava belum terhubung</div>
+</header>
+
+<!-- ============ VIEW: BERANDA ============ -->
+<div id="viewBeranda" class="view aktif">
+  <div id="pesanBeranda" class="pesan"></div>
+
+  <div class="card" id="kartuHubung">
+    <h2>1. Hubungkan Strava</h2>
+    <p>Buat API app gratis di <b>strava.com/settings/api</b> (panduan ada di bawah), lalu isi:</p>
+    <label class="lbl">CLIENT ID</label>
+    <input type="text" id="inClientId" inputmode="numeric" placeholder="contoh: 123456">
+    <label class="lbl">CLIENT SECRET</label>
+    <input type="password" id="inClientSecret" placeholder="tempel client secret">
+    <label class="lbl">AUTHORIZATION CALLBACK DOMAIN — isi di Strava dengan:</label>
+    <input type="text" id="inDomain" readonly>
+    <button class="btn-utama" id="btnHubung">Simpan &amp; Hubungkan Strava</button>
+    <p class="kecil" style="margin-top:10px">Key tersimpan hanya di browser HP ini. Kalau setelah login Strava kamu diarahkan ke halaman error, salin <b>code=...</b> dari alamat halaman itu, tempel di sini:</p>
+    <div class="deret">
+      <input type="text" id="inKodeManual" placeholder="tempel kode manual" style="flex:1; min-width:160px">
+      <button class="btn-biasa" id="btnKodeManual">Pakai Kode</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Cara membuat API app Strava (sekali saja)</h2>
+    <p>1. Buka <b>strava.com/settings/api</b> sambil login akun Strava-mu.<br>
+       2. Application Name: bebas, mis. <b>OverlayRide</b>. Category: <b>Other</b>.<br>
+       3. Website: bebas, mis. <b>https://www.strava.com</b>.<br>
+       4. <b>Authorization Callback Domain</b>: isi persis seperti kotak di atas.<br>
+       5. Klik Create → salin <b>Client ID</b> dan <b>Client Secret</b> ke formulir di atas.</p>
+  </div>
+
+  <div class="judul-seksi">AKTIVITAS TERAKHIR</div>
+  <div id="daftarAkt"><p class="kecil">Belum ada data. Hubungkan Strava, atau pakai jalur cepat di bawah.</p></div>
+
+  <div class="judul-seksi">JALUR CEPAT (TANPA STRAVA)</div>
+  <div class="deret">
+    <button class="btn-biasa" id="btnDemo">Pakai Data Contoh</button>
+    <button class="btn-biasa" id="btnGpx">Upload File GPX</button>
+    <input type="file" id="inGpx" accept=".gpx" style="display:none">
+  </div>
+</div>
+
+<!-- ============ VIEW: EDITOR ============ -->
+<div id="viewEditor" class="view">
+  <div id="bungkusCanvas"><canvas id="cv" width="1080" height="1350"></canvas></div>
+
+  <div class="deret" style="justify-content:center; margin-bottom:6px">
+    <button class="btn-biasa btn-kecil" id="btnFoto">📷 Pilih Foto</button>
+    <input type="file" id="inFoto" accept="image/*" style="display:none">
+    <button class="btn-biasa btn-kecil" id="btnReset">↺ Reset Posisi</button>
+    <button class="btn-biasa btn-kecil" id="btnKembali">← Aktivitas</button>
+  </div>
+
+  <div class="judul-seksi">TEMPLATE</div>
+  <div class="deret" id="deretTemplate">
+    <button class="btn-biasa chip aktif" data-tpl="pursuit">Pursuit</button>
+    <button class="btn-biasa chip" data-tpl="minimal">Minimal</button>
+    <button class="btn-biasa chip" data-tpl="poster">Poster</button>
+  </div>
+
+  <div class="judul-seksi">TAMPILKAN</div>
+  <div class="deret" id="deretToggle">
+    <label class="tog"><input type="checkbox" data-el="judul" checked> Judul</label>
+    <label class="tog"><input type="checkbox" data-el="tanggal" checked> Tanggal</label>
+    <label class="tog"><input type="checkbox" data-el="rute" checked> Rute</label>
+    <label class="tog"><input type="checkbox" data-el="jarak" checked> Jarak</label>
+    <label class="tog"><input type="checkbox" data-el="stats" checked> Statistik</label>
+  </div>
+
+  <div class="judul-seksi">WARNA TEKS</div>
+  <div class="deret" id="deretWarna">
+    <button class="btn-biasa chip aktif" data-warna="putih">Putih</button>
+    <button class="btn-biasa chip" data-warna="hitam">Hitam</button>
+    <button class="btn-biasa chip" data-warna="oranye">Oranye</button>
+  </div>
+
+  <div class="judul-seksi">UKURAN ELEMEN TERPILIH — <span id="namaElemen">ketuk elemen di gambar untuk memilih, lalu geser</span></div>
+  <input type="range" id="inUkuran" min="50" max="200" value="100">
+
+  <button class="btn-utama" id="btnSimpan">⬇ Simpan PNG</button>
+  <p class="kecil" style="margin-top:8px">Tanpa foto = PNG overlay transparan. Dengan foto = gambar jadi, siap posting.</p>
+</div>
+
+<script>
+"use strict";
+/* ================= util ================= */
+const $ = s => document.querySelector(s);
+const HARI = ["MINGGU","SENIN","SELASA","RABU","KAMIS","JUMAT","SABTU"];
+const BULAN = ["JANUARI","FEBRUARI","MARET","APRIL","MEI","JUNI","JULI","AGUSTUS","SEPTEMBER","OKTOBER","NOVEMBER","DESEMBER"];
+const koma = (n, d=2) => n.toFixed(d).replace(".", ",");
+function fmtWaktu(sec){ sec = Math.round(sec||0); const h=Math.floor(sec/3600), m=Math.floor(sec%3600/60), s=sec%60;
+  return h ? h+":"+String(m).padStart(2,"0")+":"+String(s).padStart(2,"0") : m+":"+String(s).padStart(2,"0"); }
+function fmtTanggal(iso){ const d = new Date(iso); if (isNaN(d)) return "";
+  return HARI[d.getDay()]+", "+d.getDate()+" "+BULAN[d.getMonth()]+" "+d.getFullYear(); }
+function hav(a,b){ const R=6371000, p1=a[0]*Math.PI/180, p2=b[0]*Math.PI/180,
+  dp=(b[0]-a[0])*Math.PI/180, dl=(b[1]-a[1])*Math.PI/180,
+  h=Math.sin(dp/2)**2+Math.cos(p1)*Math.cos(p2)*Math.sin(dl/2)**2; return 2*R*Math.asin(Math.sqrt(h)); }
+function decodePolyline(str){ const pts=[]; let i=0, lat=0, lon=0;
+  while(i<str.length){ let b, sh=0, res=0;
+    do{ b=str.charCodeAt(i++)-63; res|=(b&31)<<sh; sh+=5; }while(b>=32);
+    lat += (res&1) ? ~(res>>1) : (res>>1); sh=0; res=0;
+    do{ b=str.charCodeAt(i++)-63; res|=(b&31)<<sh; sh+=5; }while(b>=32);
+    lon += (res&1) ? ~(res>>1) : (res>>1); pts.push([lat/1e5, lon/1e5]); }
+  return pts; }
+function pesan(teks, ok){ const e=$("#pesanBeranda"); e.textContent=teks; e.className="pesan "+(ok?"ok":"err"); }
+
+/* ================= data contoh (ride asli 8 Okt 2026) ================= */
+const DEMO = { nama:"Morning Ride — Tuban", tanggal:"2026-10-08T05:12:23+07:00",
+  dist:37840, waktu:3763, elev:40, hr:149, kec:36.2, pts: [[-6.89112, 112.04091], [-6.89017, 112.04152], [-6.88896, 112.04232], [-6.88766, 112.04316], [-6.88625, 112.04407], [-6.88483, 112.04498], [-6.88339, 112.04593], [-6.88189, 112.04681], [-6.88066, 112.04547], [-6.87948, 112.04411], [-6.87817, 112.04279], [-6.87686, 112.04162], [-6.87552, 112.04043], [-6.87413, 112.03921], [-6.87272, 112.03797], [-6.87128, 112.03669], [-6.86985, 112.03542], [-6.86841, 112.03415], [-6.86689, 112.03293], [-6.86537, 112.03171], [-6.86385, 112.03048], [-6.86234, 112.02926], [-6.86228, 112.02802], [-6.86351, 112.02664], [-6.86481, 112.02538], [-6.86646, 112.02458], [-6.86824, 112.02395], [-6.87011, 112.02332], [-6.87194, 112.02267], [-6.87376, 112.02202], [-6.87558, 112.02136], [-6.8774, 112.02077], [-6.87919, 112.02018], [-6.88097, 112.01959], [-6.88275, 112.01913], [-6.88317, 112.02106], [-6.88364, 112.0229], [-6.88424, 112.0247], [-6.8853, 112.02623], [-6.88625, 112.02783], [-6.88681, 112.0296], [-6.8875, 112.03141], [-6.88836, 112.03309], [-6.88932, 112.03482], [-6.89018, 112.03656], [-6.89098, 112.03832], [-6.89178, 112.04009], [-6.89016, 112.04153], [-6.88808, 112.04284], [-6.88598, 112.0442], [-6.88395, 112.04555], [-6.88206, 112.04676], [-6.88078, 112.04561], [-6.87942, 112.04404], [-6.87787, 112.04253], [-6.8763, 112.04109], [-6.8747, 112.03968], [-6.87309, 112.03826], [-6.87141, 112.03679], [-6.86976, 112.03531], [-6.86811, 112.03387], [-6.86636, 112.03248], [-6.86464, 112.0311], [-6.86288, 112.02968], [-6.86198, 112.02833], [-6.86338, 112.0268], [-6.86487, 112.02533], [-6.86686, 112.02444], [-6.86893, 112.02373], [-6.87097, 112.02302], [-6.87297, 112.0223], [-6.87493, 112.0216], [-6.87689, 112.02093], [-6.87891, 112.02029], [-6.88091, 112.01964], [-6.8828, 112.01924], [-6.88325, 112.02138], [-6.88382, 112.0235], [-6.88475, 112.02555], [-6.8861, 112.02733], [-6.88674, 112.0294], [-6.88756, 112.03152], [-6.88857, 112.03348], [-6.88963, 112.03544], [-6.89056, 112.03741], [-6.89147, 112.03932], [-6.8909, 112.04108], [-6.88889, 112.04234], [-6.88691, 112.04362], [-6.88497, 112.04488], [-6.88301, 112.04617], [-6.8812, 112.04615], [-6.87978, 112.04445], [-6.87823, 112.04285], [-6.87658, 112.04137], [-6.87494, 112.03991], [-6.87329, 112.03846], [-6.87164, 112.037], [-6.87002, 112.03555], [-6.86832, 112.03405], [-6.86656, 112.03265], [-6.86481, 112.03123], [-6.86306, 112.02982], [-6.86188, 112.02843], [-6.86326, 112.0269], [-6.86469, 112.02547], [-6.86654, 112.02454], [-6.86864, 112.02383], [-6.87078, 112.02308], [-6.87311, 112.02225], [-6.87541, 112.02143], [-6.8776, 112.02071], [-6.87963, 112.02004], [-6.88143, 112.01945], [-6.88291, 112.01969], [-6.88332, 112.02172], [-6.88388, 112.0237], [-6.88481, 112.02561], [-6.8861, 112.02733], [-6.88674, 112.02937], [-6.88752, 112.03141], [-6.8885, 112.0333], [-6.88951, 112.03518], [-6.89046, 112.03719], [-6.89143, 112.03923], [-6.89107, 112.04096], [-6.8891, 112.04221], [-6.88713, 112.04348], [-6.88503, 112.04484], [-6.88298, 112.04619], [-6.88114, 112.04612], [-6.87967, 112.04431], [-6.87804, 112.04266], [-6.87622, 112.04106], [-6.87439, 112.03943], [-6.87257, 112.03782], [-6.87077, 112.03623], [-6.86905, 112.03469], [-6.86739, 112.03332], [-6.8657, 112.03197], [-6.86402, 112.03061], [-6.86233, 112.02926], [-6.86238, 112.02791], [-6.86371, 112.02644], [-6.86523, 112.02507], [-6.86713, 112.02436], [-6.86906, 112.02369], [-6.871, 112.023], [-6.87279, 112.02238], [-6.87477, 112.02167], [-6.87669, 112.02099], [-6.87884, 112.02032], [-6.88085, 112.01965], [-6.88274, 112.01916], [-6.88322, 112.02128], [-6.8838, 112.02344], [-6.88469, 112.02546], [-6.88604, 112.02723], [-6.8867, 112.02926], [-6.88744, 112.03131], [-6.88839, 112.03317], [-6.88943, 112.03502], [-6.89033, 112.03694], [-6.89123, 112.03885]] };
+
+/* ================= state ================= */
+const S = {
+  akt: null,            // aktivitas aktif {nama,tanggal,dist,waktu,elev,hr,kec,pts}
+  foto: null,           // Image latar
+  tpl: "pursuit",
+  warna: "putih",
+  tampil: { judul:true, tanggal:true, rute:true, jarak:true, stats:true },
+  geser: {},            // per template: { elId: {dx,dy,skala} }
+  pilih: null,          // elemen terpilih
+  kotak: {},            // bbox elemen hasil render terakhir
+};
+function geserEl(id){ const t = S.geser[S.tpl] || (S.geser[S.tpl]={});
+  return t[id] || (t[id]={dx:0, dy:0, skala:1}); }
+
+/* ================= STRAVA ================= */
+const LS = { get k(){ try{ return JSON.parse(localStorage.getItem("ovr_strava")||"null"); }catch(e){ return null; } },
+             set k(v){ localStorage.setItem("ovr_strava", JSON.stringify(v)); } };
+function redirectUri(){
+  const web = location.protocol === "http:" || location.protocol === "https:";
+  return web ? (location.origin + location.pathname) : "http://localhost/";
+}
+async function tukarToken(body){
+  const cfg = LS.k; if(!cfg || !cfg.id || !cfg.secret) throw new Error("Client ID/Secret belum diisi.");
+  const r = await fetch("https://www.strava.com/oauth/token", { method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({ client_id:cfg.id, client_secret:cfg.secret, ...body }) });
+  const j = await r.json(); if(!r.ok) throw new Error(j.message || "Token ditolak Strava.");
+  cfg.access=j.access_token; cfg.refresh=j.refresh_token; cfg.exp=j.expires_at;
+  cfg.atlet=(j.athlete ? (j.athlete.firstname+" "+(j.athlete.lastname||"")).trim() : cfg.atlet);
+  LS.k = cfg; return cfg;
+}
+async function tokenValid(){
+  let cfg = LS.k; if(!cfg || !cfg.access) return null;
+  if (cfg.exp && Date.now()/1000 > cfg.exp - 60)
+    cfg = await tukarToken({ grant_type:"refresh_token", refresh_token:cfg.refresh });
+  return cfg.access;
+}
+async function muatAktivitas(){
+  const el = $("#daftarAkt"); el.innerHTML = '<p class="kecil">Memuat dari Strava…</p>';
+  try{
+    const tok = await tokenValid(); if(!tok){ el.innerHTML=""; return; }
+    const r = await fetch("https://www.strava.com/api/v3/athlete/activities?per_page=30",
+      { headers:{ Authorization:"Bearer "+tok } });
+    const arr = await r.json(); if(!r.ok) throw new Error(arr.message||"Gagal memuat.");
+    $("#statusAkun").textContent = "Strava: "+(LS.k.atlet||"terhubung");
+    $("#kartuHubung").style.display = "none";
+    if(!arr.length){ el.innerHTML = '<p class="kecil">Belum ada aktivitas di akun ini.</p>'; return; }
+    el.innerHTML = "";
+    arr.forEach(a=>{
+      const d = document.createElement("div"); d.className="akt";
+      d.innerHTML = '<div><div class="nm"></div><div class="dt"></div></div><div class="km"></div>';
+      d.querySelector(".nm").textContent = a.name || a.sport_type || "Ride";
+      d.querySelector(".dt").textContent = fmtTanggal(a.start_date_local)+" • "+fmtWaktu(a.moving_time);
+      d.querySelector(".km").textContent = koma(a.distance/1000,1)+" km";
+      d.onclick = ()=> bukaEditor({
+        nama: a.name||"Ride", tanggal: a.start_date_local, dist: a.distance,
+        waktu: a.moving_time, elev: Math.round(a.total_elevation_gain||0),
+        hr: a.average_heartrate ? Math.round(a.average_heartrate) : null,
+        kec: a.average_speed ? a.average_speed*3.6 : 0,
+        pts: (a.map && a.map.summary_polyline) ? decodePolyline(a.map.summary_polyline) : []
+      });
+      el.appendChild(d);
+    });
+  }catch(e){ el.innerHTML=""; pesan("Strava: "+e.message, false); }
+}
+$("#btnHubung").onclick = ()=>{
+  const id = $("#inClientId").value.trim(), sec = $("#inClientSecret").value.trim();
+  if(!id || !sec){ pesan("Isi dulu Client ID dan Client Secret-nya.", false); return; }
+  LS.k = { id, secret:sec };
+  const uri = encodeURIComponent(redirectUri());
+  location.href = "https://www.strava.com/oauth/authorize?client_id="+id+
+    "&response_type=code&redirect_uri="+uri+"&approval_prompt=auto&scope=read,activity:read_all";
+};
+$("#btnKodeManual").onclick = async ()=>{
+  const idF = $("#inClientId").value.trim(), secF = $("#inClientSecret").value.trim();
+  if(idF && secF) LS.k = { id:idF, secret:secF };
+  const kode = $("#inKodeManual").value.trim();
+  const m = kode.match(/code=([A-Za-z0-9]+)/); const code = m ? m[1] : kode;
+  if(!code){ pesan("Tempel dulu kodenya.", false); return; }
+  try{ await tukarToken({ code, grant_type:"authorization_code" });
+    pesan("Strava terhubung. Memuat aktivitas…", true); muatAktivitas();
+  }catch(e){ pesan(e.message, false); }
+};
+
+/* ================= GPX ================= */
+$("#btnGpx").onclick = ()=> $("#inGpx").click();
+$("#inGpx").onchange = e=>{
+  const f = e.target.files[0]; if(!f) return;
+  const rd = new FileReader();
+  rd.onload = ()=>{
+    try{
+      const doc = new DOMParser().parseFromString(rd.result, "text/xml");
+      const tps = [...doc.getElementsByTagName("trkpt")]; if(!tps.length) throw new Error("Tidak ada track di GPX ini.");
+      const pts=[], eles=[], times=[], hrs=[];
+      tps.forEach(tp=>{ pts.push([+tp.getAttribute("lat"), +tp.getAttribute("lon")]);
+        const e1 = tp.getElementsByTagName("ele")[0]; eles.push(e1?+e1.textContent:null);
+        const t1 = tp.getElementsByTagName("time")[0]; times.push(t1?new Date(t1.textContent):null);
+        let hr=null; const hl = tp.getElementsByTagName("gpxtpx:hr")[0] || tp.getElementsByTagName("hr")[0];
+        if(hl) hr = +hl.textContent; hrs.push(hr); });
+      let dist=0; for(let i=1;i<pts.length;i++) dist += hav(pts[i-1], pts[i]);
+      let gain=0, ref=null;
+      eles.forEach(e=>{ if(e==null) return; if(ref==null){ref=e;return;} const df=e-ref;
+        if(df>=1){gain+=df;ref=e;} else if(df<=-1){ref=e;} });
+      let elapsed=0, moving=0;
+      for(let i=1;i<times.length;i++){ if(times[i]&&times[i-1]){ const dt=(times[i]-times[i-1])/1000;
+        elapsed+=dt; if(dt>0 && hav(pts[i-1],pts[i])/dt>0.5) moving+=dt; } }
+      const hv = hrs.filter(x=>x);
+      bukaEditor({ nama:"Ride GPX", tanggal: times.find(t=>t) ? times.find(t=>t).toISOString() : new Date().toISOString(),
+        dist, waktu: moving||elapsed, elev: Math.round(gain),
+        hr: hv.length?Math.round(hv.reduce((a,b)=>a+b,0)/hv.length):null,
+        kec: (moving||elapsed)? dist/(moving||elapsed)*3.6 : 0, pts });
+    }catch(err){ pesan("GPX gagal dibaca: "+err.message, false); }
+  };
+  rd.readAsText(f);
+};
+$("#btnDemo").onclick = ()=> bukaEditor({ ...DEMO });
+
+/* ================= EDITOR ================= */
+const cv = $("#cv"), ctx = cv.getContext("2d");
+const W = 1080, H = 1350;
+const WARNA = { putih:"#ffffff", hitam:"#141414", oranye:"#fc4c02" };
+const TPL = {
+  pursuit: { tanggal:{x:.5,y:.055,s:1}, rute:{x:.5,y:.30,s:1}, jarak:{x:.5,y:.60,s:1},
+             stats:{x:.5,y:.86,s:1}, judul:{x:.5,y:.955,s:1} },
+  minimal: { judul:{x:.06,y:.055,s:.85}, tanggal:{x:.06,y:.105,s:.8}, jarak:{x:.06,y:.80,s:.9},
+             stats:{x:.06,y:.885,s:.9}, rute:{x:.80,y:.16,s:.55} },
+  poster:  { rute:{x:.5,y:.24,s:1.15}, jarak:{x:.5,y:.52,s:1.25}, tanggal:{x:.5,y:.665,s:1},
+             stats:{x:.5,y:.78,s:1.05}, judul:{x:.5,y:.93,s:1} },
+};
+function font(px, wgt){ return wgt+" "+px+"px Montserrat, Arial, sans-serif"; }
+function teksTengah(x, y, teks, px, wgt, warna, spasi=0){
+  ctx.font = font(px, wgt); ctx.fillStyle = warna; ctx.textBaseline = "middle";
+  if(!spasi){ ctx.textAlign="center"; ctx.fillText(teks, x, y);
+    const w = ctx.measureText(teks).width; return {x:x-w/2, y:y-px/2, w, h:px}; }
+  const huruf=[...teks]; const lebar=huruf.map(c=>ctx.measureText(c).width);
+  const total=lebar.reduce((a,b)=>a+b,0)+spasi*(huruf.length-1);
+  let cx = x-total/2; ctx.textAlign="left";
+  huruf.forEach((c,i)=>{ ctx.fillText(c, cx, y); cx += lebar[i]+spasi; });
+  return {x:x-total/2, y:y-px/2, w:total, h:px};
+}
+function gambarRute(cx, cy, skala){
+  const pts = S.akt.pts; if(!pts || pts.length<2) return null;
+  const bw = 780*skala, bh = 470*skala;
+  const mid = pts.reduce((a,p)=>a+p[0],0)/pts.length*Math.PI/180;
+  const xs = pts.map(p=>p[1]*Math.cos(mid)), ys = pts.map(p=>p[0]);
+  const minx=Math.min(...xs), maxx=Math.max(...xs), miny=Math.min(...ys), maxy=Math.max(...ys);
+  const sc = Math.min(bw/Math.max(maxx-minx,1e-9), bh/Math.max(maxy-miny,1e-9));
+  const ox = cx-(maxx-minx)*sc/2, oy = cy-(maxy-miny)*sc/2;
+  ctx.save();
+  ctx.beginPath();
+  pts.forEach((p,i)=>{ const x=ox+(p[1]*Math.cos(mid)-minx)*sc, y=oy+(maxy-p[0])*sc;
+    i?ctx.lineTo(x,y):ctx.moveTo(x,y); });
+  ctx.lineJoin="round"; ctx.lineCap="round";
+  ctx.strokeStyle = S.warna==="hitam" ? "rgba(255,255,255,.5)" : "rgba(0,0,0,.45)";
+  ctx.lineWidth = 13*skala; ctx.stroke();
+  ctx.strokeStyle = WARNA[S.warna]; ctx.lineWidth = 8*skala; ctx.stroke();
+  const ujung = i=>{ const p=pts[i]; return [ox+(p[1]*Math.cos(mid)-minx)*sc, oy+(maxy-p[0])*sc]; };
+  [[ujung(0),"#3ddc74"],[ujung(pts.length-1),"#ff5030"]].forEach(([u,c])=>{
+    ctx.beginPath(); ctx.arc(u[0],u[1],12*skala,0,7); ctx.fillStyle=c; ctx.fill();
+    ctx.lineWidth=4*skala; ctx.strokeStyle="#fff"; ctx.stroke(); });
+  ctx.restore();
+  return { x:cx-bw/2, y:cy-bh/2, w:bw, h:bh };
+}
+function gambarStats(cx, cy, skala, rataKiri){
+  const a = S.akt;
+  const item = [["WAKTU", fmtWaktu(a.waktu)], ["ELEVASI", Math.round(a.elev)+" m"],
+    ["KECEPATAN", koma(a.kec,1)+" km/j"]];
+  if(a.hr) item.push(["AVG HR", a.hr+" bpm"]);
+  const warna = WARNA[S.warna];
+  ctx.save();
+  ctx.shadowColor = S.warna==="hitam" ? "rgba(255,255,255,.35)" : "rgba(0,0,0,.5)";
+  if(S.tpl==="poster" || !rataKiri){
+    const cw = 250*skala, total = cw*item.length;
+    let x0 = cx-total/2;
+    const kotak = { x:x0, y:cy-52*skala, w:total, h:120*skala };
+    item.forEach(([lb,vl])=>{
+      teksTengah(x0+cw/2, cy-28*skala, lb, 25*skala, 600, warna, 4*skala);
+      teksTengah(x0+cw/2, cy+26*skala, vl, 44*skala, 700, warna);
+      x0 += cw; });
+    ctx.restore(); return kotak;
+  }
+  // minimal: rata kiri, label & nilai sebaris ringkas
+  const baris = item.map(([lb,vl])=>vl).join("   •   ");
+  ctx.font = font(40*skala,700);
+  const w = ctx.measureText(baris).width;
+  ctx.fillStyle = warna; ctx.textAlign="left"; ctx.textBaseline="middle";
+  ctx.fillText(baris, cx, cy);
+  ctx.restore();
+  return { x:cx, y:cy-26*skala, w, h:52*skala };
+}
+function gambar(){
+  ctx.clearRect(0,0,W,H);
+  S.kotak = {};
+  if(S.foto){ // cover-fit
+    const im = S.foto, r = Math.max(W/im.width, H/im.height);
+    const w = im.width*r, h = im.height*r;
+    ctx.drawImage(im, (W-w)/2, (H-h)/2, w, h);
+  }
+  const a = S.akt; if(!a) return;
+  const tpl = TPL[S.tpl], warna = WARNA[S.warna];
+  ctx.save();
+  ctx.shadowColor = S.warna==="hitam" ? "rgba(255,255,255,.35)" : "rgba(0,0,0,.55)";
+  ctx.shadowBlur = 14; ctx.shadowOffsetY = 3;
+  const kiri = S.tpl==="minimal";
+  const taruh = (id, fn)=>{
+    if(!S.tampil[id]) return;
+    const d = tpl[id], g = geserEl(id);
+    const cx = (d.x + g.dx) * W, cy = (d.y + g.dy) * H;
+    const k = fn(cx, cy, d.s * g.skala);
+    if(k) S.kotak[id] = k;
+  };
+  taruh("tanggal", (x,y,s)=> teksTengah(x, y, fmtTanggal(a.tanggal), 37*s, 600, warna, 9*s));
+  taruh("judul", (x,y,s)=>{ ctx.textAlign = kiri?"left":"center";
+    if(kiri){ ctx.font=font(40*s,800); ctx.fillStyle=warna; ctx.textBaseline="middle";
+      ctx.fillText(a.nama||"Ride", x, y); const w=ctx.measureText(a.nama||"Ride").width;
+      return {x, y:y-24*s, w, h:48*s}; }
+    return teksTengah(x, y, (a.nama||"Ride").toUpperCase(), 40*s, 800, warna, 3*s); });
+  taruh("rute", (x,y,s)=> gambarRute(x, y, s));
+  taruh("jarak", (x,y,s)=>{ const t = koma(a.dist/1000)+" km";
+    return teksTengah(x, y, t, 165*s, 800, warna); });
+  ctx.restore();
+  taruh("stats", (x,y,s)=> gambarStats(x, y, s, kiri));
+  if(S.pilih && S.kotak[S.pilih]){ const k = S.kotak[S.pilih];
+    ctx.save(); ctx.strokeStyle="#fc4c02"; ctx.lineWidth=3; ctx.setLineDash([12,9]);
+    ctx.strokeRect(k.x-10, k.y-10, k.w+20, k.h+20); ctx.restore(); }
+}
+/* drag */
+let seret = null;
+function posSentuh(e){ const r = cv.getBoundingClientRect();
+  return { x:(e.clientX-r.left)/r.width*W, y:(e.clientY-r.top)/r.height*H }; }
+cv.addEventListener("pointerdown", e=>{
+  const p = posSentuh(e);
+  const id = Object.keys(S.kotak).reverse().find(id=>{
+    const k = S.kotak[id]; return p.x>k.x-16 && p.x<k.x+k.w+16 && p.y>k.y-16 && p.y<k.y+k.h+16; });
+  if(id){ S.pilih = id; $("#namaElemen").textContent = id.toUpperCase();
+    $("#inUkuran").value = Math.round(geserEl(id).skala*100);
+    seret = { id, mx:p.x, my:p.y, dx:geserEl(id).dx, dy:geserEl(id).dy };
+    cv.setPointerCapture(e.pointerId); gambar(); }
+});
+cv.addEventListener("pointermove", e=>{ if(!seret) return;
+  const p = posSentuh(e), g = geserEl(seret.id);
+  g.dx = seret.dx + (p.x-seret.mx)/W; g.dy = seret.dy + (p.y-seret.my)/H; gambar(); });
+["pointerup","pointercancel"].forEach(ev=> cv.addEventListener(ev, ()=> seret=null));
+$("#inUkuran").oninput = e=>{ if(!S.pilih) return;
+  geserEl(S.pilih).skala = e.target.value/100; gambar(); };
+$("#deretTemplate").onclick = e=>{ const b = e.target.closest("[data-tpl]"); if(!b) return;
+  S.tpl = b.dataset.tpl;
+  document.querySelectorAll("#deretTemplate .chip").forEach(c=>c.classList.toggle("aktif", c===b));
+  gambar(); };
+$("#deretToggle").onchange = e=>{ const id = e.target.dataset.el;
+  S.tampil[id] = e.target.checked; gambar(); };
+$("#deretWarna").onclick = e=>{ const b = e.target.closest("[data-warna]"); if(!b) return;
+  S.warna = b.dataset.warna;
+  document.querySelectorAll("#deretWarna .chip").forEach(c=>c.classList.toggle("aktif", c===b));
+  gambar(); };
+$("#btnReset").onclick = ()=>{ S.geser[S.tpl] = {}; S.pilih = null; gambar(); };
+$("#btnFoto").onclick = ()=> $("#inFoto").click();
+$("#inFoto").onchange = e=>{ const f = e.target.files[0]; if(!f) return;
+  const im = new Image(); im.onload = ()=>{ S.foto = im; gambar(); };
+  im.src = URL.createObjectURL(f); };
+$("#btnKembali").onclick = ()=>{ $("#viewEditor").classList.remove("aktif");
+  $("#viewBeranda").classList.add("aktif"); window.scrollTo(0,0); };
+$("#btnSimpan").onclick = ()=>{ const pil = S.pilih; S.pilih = null; gambar();
+  cv.toBlob(b=>{ const a = document.createElement("a");
+    a.href = URL.createObjectURL(b); a.download = "overlay-ride.png"; a.click();
+    setTimeout(()=>{ S.pilih = pil; gambar(); }, 300); }); };
+function bukaEditor(akt){ S.akt = akt; S.pilih = null;
+  $("#viewBeranda").classList.remove("aktif"); $("#viewEditor").classList.add("aktif");
+  window.scrollTo(0,0); gambar(); }
+
+/* ================= init ================= */
+(function init(){
+  const web = location.protocol === "http:" || location.protocol === "https:";
+  $("#inDomain").value = (web && location.hostname) ? location.hostname : "localhost";
+  const cfg = LS.k;
+  if(cfg && cfg.id) $("#inClientId").value = cfg.id;
+  if(cfg && cfg.secret) $("#inClientSecret").value = cfg.secret;
+  const q = new URLSearchParams(location.search);
+  if(q.get("code")){
+    history.replaceState({}, "", location.pathname);
+    tukarToken({ code:q.get("code"), grant_type:"authorization_code" })
+      .then(()=>{ pesan("Strava terhubung. Memuat aktivitas…", true); muatAktivitas(); })
+      .catch(e=> pesan("Gagal hubungkan Strava: "+e.message, false));
+  } else if(cfg && cfg.access){ muatAktivitas(); }
+  if(document.fonts && document.fonts.ready) document.fonts.ready.then(()=>{ if(S.akt) gambar(); });
+})();
+</script>
+</body>
+</html>
