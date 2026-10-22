@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Overlay Ride — Template Overlay Strava</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Anton&family=Playfair+Display:ital,wght@1,500;1,700&family=Space+Mono:wght@400;700&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Anton&family=Playfair+Display:ital,wght@1,500;1,700&family=Space+Mono:wght@400;700&family=Caveat:wght@600;700&family=Poppins:wght@500;700;800&family=Bebas+Neue&display=swap" rel="stylesheet">
+<link href="https://fonts.cdnfonts.com/css/komika-axis" rel="stylesheet">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   body { font-family: 'Montserrat', Arial, sans-serif; background: #101014; color: #f2f2f5; min-height: 100vh; }
@@ -184,6 +185,8 @@
     <label class="lbl">JENIS FONT</label>
     <div class="deret" id="deretFamStats">
       <button class="btn-biasa chip" data-sfam="sans">Sans</button>
+      <button class="btn-biasa chip" data-sfam="poppins">Poppins</button>
+      <button class="btn-biasa chip" data-sfam="bebas">Bebas Neue</button>
       <button class="btn-biasa chip" data-sfam="condensed">Condensed</button>
       <button class="btn-biasa chip" data-sfam="serif">Serif</button>
       <button class="btn-biasa chip" data-sfam="mono">Mono</button>
@@ -197,6 +200,22 @@
     </div>
     <label class="lbl">WARNA FONT</label>
     <div class="deret" id="deretWarnaStats"></div>
+  </div>
+
+  <div id="blokFont" style="display:none">
+    <div class="judul-seksi">JENIS FONT — <span id="lblFontElemen">ELEMEN</span></div>
+    <div class="deret" id="deretFontElemen">
+      <button class="btn-biasa chip" data-ffam="sans">Montserrat</button>
+      <button class="btn-biasa chip" data-ffam="poppins">Poppins</button>
+      <button class="btn-biasa chip" data-ffam="bebas">Bebas Neue</button>
+      <button class="btn-biasa chip" data-ffam="condensed">Anton</button>
+      <button class="btn-biasa chip" data-ffam="helvetica">Helvetica</button>
+      <button class="btn-biasa chip" data-ffam="futura">Futura</button>
+      <button class="btn-biasa chip" data-ffam="komika">Komika Axis</button>
+      <button class="btn-biasa chip" data-ffam="serif">Serif</button>
+      <button class="btn-biasa chip" data-ffam="mono">Mono</button>
+      <button class="btn-biasa chip" data-ffam="tulis">Tulisan Tangan</button>
+    </div>
   </div>
 
   </div>
@@ -221,6 +240,8 @@
       <button class="btn-biasa chip" data-font="mono">Mono</button>
       <button class="btn-biasa chip" data-font="tulis">Tulisan Tangan</button>
       <button class="btn-biasa chip" data-font="sans">Sans</button>
+      <button class="btn-biasa chip" data-font="poppins">Poppins</button>
+      <button class="btn-biasa chip" data-font="bebas">Bebas Neue</button>
     </div>
     <label class="lbl">WARNA</label>
     <div class="deret" id="deretWarnaStk"></div>
@@ -474,6 +495,11 @@ function fontGaya(px, fam, wgt, miring){
   if(fam === "condensed") return pre+px+"px Anton, 'Arial Narrow', sans-serif";
   if(fam === "mono") return pre+wgt+" "+px+"px 'Space Mono', monospace";
   if(fam === "tulis") return pre+"700 "+px+"px Caveat, cursive";
+  if(fam === "poppins") return pre+wgt+" "+px+"px Poppins, Arial, sans-serif";
+  if(fam === "bebas") return pre+px+"px 'Bebas Neue', 'Arial Narrow', sans-serif";
+  if(fam === "helvetica") return pre+wgt+" "+px+"px 'Helvetica Neue', Helvetica, Arial, sans-serif";
+  if(fam === "futura") return pre+wgt+" "+px+"px Futura, 'Trebuchet MS', Verdana, sans-serif";
+  if(fam === "komika") return pre+px+"px 'Komika Axis', 'Arial Narrow', sans-serif";
   return pre+wgt+" "+px+"px Montserrat, Arial, sans-serif";
 }
 let FONT_OVERRIDE = null;
@@ -614,6 +640,8 @@ function fnt(px, fam, wgt){
   if(fam==="serif") return "italic 700 "+px+"px 'Playfair Display', Georgia, serif";
   if(fam==="mono") return (wgt||700)+" "+px+"px 'Space Mono', monospace";
   if(fam==="tulis") return "700 "+px+"px Caveat, cursive";
+  if(fam==="poppins") return (wgt||700)+" "+px+"px Poppins, Arial, sans-serif";
+  if(fam==="bebas") return px+"px 'Bebas Neue', 'Arial Narrow', sans-serif";
   return (wgt||700)+" "+px+"px Montserrat, Arial, sans-serif";
 }
 function ukTeks(teks, px, fam, wgt, spasi){ ctx.font = fnt(px, fam, wgt);
@@ -1022,13 +1050,21 @@ function gambar(){
   };
   taruh("tanggal", (x,y,s)=> teksTengah(x, y, fmtTanggal(a.tanggal), 37*s, 600, warna, 9*s));
   taruh("judul", (x,y,s)=>{ ctx.textAlign = kiri?"left":"center";
-    if(kiri){ ctx.font=font(40*s,800); ctx.fillStyle=warna; ctx.textBaseline="middle";
+    const fj = geserEl("judul").fFam;
+    FONT_OVERRIDE = fj ? (px,w)=> fontGaya(px, fj, w, false) : null;
+    let k;
+    if(kiri){ ctx.font = fj ? fontGaya(40*s, fj, 800, false) : font(40*s,800);
+      ctx.fillStyle=warna; ctx.textBaseline="middle";
       ctx.fillText(a.nama||"Ride", x, y); const w=ctx.measureText(a.nama||"Ride").width;
-      return {x, y:y-24*s, w, h:48*s}; }
-    return teksTengah(x, y, (a.nama||"Ride").toUpperCase(), 40*s, 800, warna, 3*s); });
+      k = {x, y:y-24*s, w, h:48*s}; }
+    else k = teksTengah(x, y, (a.nama||"Ride").toUpperCase(), 40*s, 800, warna, 3*s);
+    FONT_OVERRIDE = null; return k; });
   taruh("rute", (x,y,s)=> gambarRute(x, y, s));
   taruh("jarak", (x,y,s)=>{ const t = koma(a.dist/1000)+" km";
-    return teksTengah(x, y, t, 165*s, 800, warna); });
+    const fj = geserEl("jarak").fFam;
+    FONT_OVERRIDE = fj ? (px,w)=> fontGaya(px, fj, w, false) : null;
+    const k = teksTengah(x, y, t, 165*s, 800, warna);
+    FONT_OVERRIDE = null; return k; });
   ctx.restore();
   taruh("stats", (x,y,s)=> gambarStats(x, y, s, kiri));
   taruh("pr", (x,y,s)=> gambarPR(x, y, s, kiri));
@@ -1079,6 +1115,9 @@ cv.addEventListener("pointerdown", e=>{
     const blokSt = $("#blokStats");
     if(!inst && id === "stats"){ blokSt.style.display = "block"; sinkronBlokStats(); }
     else blokSt.style.display = "none";
+    const blokF = $("#blokFont");
+    if(!inst && (id === "jarak" || id === "judul")){ blokF.style.display = "block"; sinkronBlokFont(); }
+    else blokF.style.display = "none";
     if(S.modeFoto) setModeFoto(false);
     sinkronPanelStiker();
     cv.setPointerCapture(e.pointerId); gambar(); }
@@ -1128,6 +1167,7 @@ $("#deretTemplate").onclick = e=>{ const b = e.target.closest("[data-tpl]"); if(
   S.tpl = b.dataset.tpl;
   document.querySelectorAll("#deretTemplate .chip").forEach(c=>c.classList.toggle("aktif", c===b));
   if(S.pilih === "stats") sinkronBlokStats();
+  if(S.pilih === "jarak" || S.pilih === "judul") sinkronBlokFont();
   if(S.pilih === "rute"){ const tv = Math.round((geserEl("rute").tebal || 1)*100);
     $("#inTebal").value = tv; $("#lblTebal").textContent = tv+"%"; }
   gambar(); };
@@ -1138,6 +1178,14 @@ function sinkronBlokStats(){ const g = geserEl("stats");
     c.classList.toggle("aktif", c.dataset.sgaya === (g.stGaya || "tebal")));
   document.querySelectorAll("#deretWarnaStats .titik-warna").forEach(c=>
     c.classList.toggle("aktif", c.dataset.shex === (g.stWarna || ""))); }
+function sinkronBlokFont(){ const id = S.pilih; if(id !== "jarak" && id !== "judul") return;
+  $("#lblFontElemen").textContent = id.toUpperCase();
+  const g = geserEl(id);
+  document.querySelectorAll("#deretFontElemen .chip").forEach(c=>
+    c.classList.toggle("aktif", c.dataset.ffam === (g.fFam || "sans"))); }
+$("#deretFontElemen").onclick = e=>{ const b = e.target.closest("[data-ffam]"); if(!b) return;
+  const id = S.pilih; if(id !== "jarak" && id !== "judul") return;
+  geserEl(id).fFam = b.dataset.ffam; sinkronBlokFont(); gambar(); };
 $("#deretFamStats").onclick = e=>{ const b = e.target.closest("[data-sfam]"); if(!b) return;
   geserEl("stats").stFam = b.dataset.sfam; sinkronBlokStats(); gambar(); };
 $("#deretGayaStats").onclick = e=>{ const b = e.target.closest("[data-sgaya]"); if(!b) return;
@@ -1160,6 +1208,7 @@ $("#deretWarna").onclick = e=>{ const b = e.target.closest("[data-warna]"); if(!
 $("#btnReset").onclick = ()=>{ S.geser[S.tpl] = {}; S.pilih = null;
   S.fotoGeser = { dx:0, dy:0, zoom:1 }; setModeFoto(false);
   $("#blokTebal").style.display = "none"; $("#blokStats").style.display = "none";
+  $("#blokFont").style.display = "none";
   sinkronPanelStiker(); gambar(); };
 $("#btnFoto").onclick = ()=> $("#inFoto").click();
 $("#inFoto").onchange = e=>{ const f = e.target.files[0]; if(!f) return;
@@ -1240,6 +1289,7 @@ function bukaEditor(akt){ S.akt = akt; S.pilih = null;
   window.scrollTo(0,0);
   $("#blokTebal").style.display = "none";
   $("#blokStats").style.display = "none";
+  $("#blokFont").style.display = "none";
   setModeFoto(false);
   if(typeof tutupSheet === "function") tutupSheet();
   try{ bangunGaleri(); }catch(e){ /* galeri tak boleh menggagalkan editor */ }
