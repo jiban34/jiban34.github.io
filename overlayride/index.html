@@ -1068,10 +1068,11 @@ async function ambilCuaca(akt){
     const r = await fetch(u); if(!r.ok) return;
     const j = await r.json(); const H = j.hourly; if(!H || !H.time) return;
     let idx = H.time.findIndex(t=> new Date(t).getHours() === jam); if(idx < 0) idx = 0;
+    if(S.akt !== akt) return; // cegah cuaca aktivitas lain menimpa yang sedang dibuka
     const kon = kondisiCuaca(H.weather_code[idx]);
     S.cuaca = { suhu: Math.round(H.temperature_2m[idx]), angin: Math.round(H.wind_speed_10m[idx]),
       arah: H.wind_direction_10m[idx], ikon: kon.ikon, label: kon.label };
-    if(S.akt === akt){ bangunGaleri(); if(S.stiker.some(i=> i.jenis === "cuaca")) gambar(); }
+    bangunGaleri(); if(S.stiker.some(i=> i.jenis === "cuaca")) gambar();
   }catch(e){ /* cuaca opsional */ }
 }
 async function ambilProfil(){
