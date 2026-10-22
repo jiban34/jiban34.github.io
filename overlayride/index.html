@@ -67,6 +67,7 @@
     -webkit-backdrop-filter: blur(8px); border: 1px solid #3a3a46; border-radius: 14px;
     padding: 8px 10px; box-shadow: 0 8px 24px rgba(0,0,0,.5); }
   #barMini.tampil { display: flex; }
+  #bungkusCanvas { transition: transform .25s ease; }
   #barMini input[type=range] { flex: 1; }
   .btn-mini { background: #26262f; color: #e8e8ee; border: 1px solid #3a3a46; border-radius: 9px;
     padding: 7px 10px; font-size: 13px; line-height: 1; }
@@ -1150,7 +1151,7 @@ cv.addEventListener("pointerdown", e=>{
     else blokF.style.display = "none";
     if(S.modeFoto) setModeFoto(false);
     sinkronPanelStiker();
-    cv.setPointerCapture(e.pointerId); gambar(); updateBarMini(); gulirKeElemen(); }
+    cv.setPointerCapture(e.pointerId); gambar(); updateBarMini(); }
 });
 cv.addEventListener("pointermove", e=>{
   if(seretFoto){ const p = posSentuh(e);
@@ -1188,15 +1189,18 @@ const RASIO_H = { "4:5":1350, "1:1":1080, "9:16":1920 };
 $("#deretRasio").onclick = e=>{ const b = e.target.closest("[data-rasio]"); if(!b) return;
   document.querySelectorAll("#deretRasio .chip").forEach(c=>
     c.classList.toggle("aktif", c===b));
-  H = RASIO_H[b.dataset.rasio]; cv.height = H; gambar(); };
-function gulirKeElemen(){ // geser halaman agar elemen terpilih terlihat DI ATAS panel yang terbuka
-  if(!document.querySelector(".sheet.buka")) return;
-  const k = S.kotak[S.pilih]; if(!k) return;
-  const r = cv.getBoundingClientRect(); if(!r.height) return;
-  const elY = r.top + (k.y + k.h/2)/H * r.height;
-  const ruang = window.innerHeight - 57 - window.innerHeight*0.40; // area bebas di atas panel+bar
-  const geser = elY - ruang*0.45;
-  if(Math.abs(geser) > 8 && window.scrollBy) window.scrollBy({ top: geser, behavior:"smooth" }); }
+  H = RASIO_H[b.dataset.rasio]; cv.height = H; gambar(); aturModePanel(); };
+function aturModePanel(){ // saat panel terbuka: kecilkan kanvas agar SELURUH gambar muat di atas panel
+  const bw = $("#bungkusCanvas"); if(!bw) return;
+  const terbuka = !!document.querySelector(".sheet.buka");
+  if(!terbuka){ bw.style.transform = ""; bw.style.marginBottom = ""; return; }
+  const lebar = bw.clientWidth || 360;
+  const tinggiAlami = lebar * H / W;
+  const ruang = window.innerHeight - Math.round(window.innerHeight*0.40) - 57 - 16;
+  const s = Math.max(.3, Math.min(1, ruang / tinggiAlami));
+  bw.style.transformOrigin = "top center";
+  bw.style.transform = "scale("+s+")";
+  bw.style.marginBottom = (-Math.round(tinggiAlami*(1-s)) + 12)+"px"; }
 function updateBarMini(){ const bm = $("#barMini"); if(!bm) return;
   const ada = !!S.pilih && !document.querySelector(".sheet.buka");
   bm.classList.toggle("tampil", ada);
@@ -1359,6 +1363,7 @@ $("#sheetAtur").appendChild($("#panelStiker"));
 function tutupSheet(){
   document.querySelectorAll(".sheet").forEach(sh=> sh.classList.remove("buka"));
   document.querySelectorAll("#barBawah [data-sheet]").forEach(b=> b.classList.remove("aktif"));
+  if(typeof aturModePanel === "function") aturModePanel();
   if(typeof updateBarMini === "function") updateBarMini();
 }
 function bukaSheet(id){
@@ -1368,9 +1373,9 @@ function bukaSheet(id){
   if(!sudah){ target.classList.add("buka");
     document.querySelectorAll("#barBawah [data-sheet]").forEach(b=>
       b.classList.toggle("aktif", b.dataset.sheet === id));
-    if(S.pilih && S.kotak[S.pilih]) gulirKeElemen();
-    else { const bc = document.getElementById("bungkusCanvas");
-      if(bc && bc.scrollIntoView) bc.scrollIntoView({ behavior:"smooth", block:"start" }); } }
+    aturModePanel();
+    const bc = document.getElementById("bungkusCanvas");
+    if(bc && bc.scrollIntoView) bc.scrollIntoView({ behavior:"smooth", block:"start" }); }
   if(typeof updateBarMini === "function") updateBarMini();
 }
 $("#barBawah").addEventListener("click", e=>{
