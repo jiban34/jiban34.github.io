@@ -119,6 +119,7 @@
     <label class="tog"><input type="checkbox" data-el="rute" checked> Rute</label>
     <label class="tog"><input type="checkbox" data-el="jarak" checked> Jarak</label>
     <label class="tog"><input type="checkbox" data-el="stats" checked> Statistik</label>
+    <label class="tog"><input type="checkbox" data-el="pr" checked> PR 🏆</label>
   </div>
 
   <div class="judul-seksi">WARNA TEKS</div>
@@ -160,7 +161,9 @@ function pesan(teks, ok){ const e=$("#pesanBeranda"); e.textContent=teks; e.clas
 
 /* ================= data contoh (ride asli 8 Okt 2026) ================= */
 const DEMO = { nama:"Morning Ride — Tuban", tanggal:"2026-10-08T05:12:23+07:00",
-  dist:37840, waktu:3763, elev:40, hr:149, kec:36.2, pts: [[-6.89112, 112.04091], [-6.89017, 112.04152], [-6.88896, 112.04232], [-6.88766, 112.04316], [-6.88625, 112.04407], [-6.88483, 112.04498], [-6.88339, 112.04593], [-6.88189, 112.04681], [-6.88066, 112.04547], [-6.87948, 112.04411], [-6.87817, 112.04279], [-6.87686, 112.04162], [-6.87552, 112.04043], [-6.87413, 112.03921], [-6.87272, 112.03797], [-6.87128, 112.03669], [-6.86985, 112.03542], [-6.86841, 112.03415], [-6.86689, 112.03293], [-6.86537, 112.03171], [-6.86385, 112.03048], [-6.86234, 112.02926], [-6.86228, 112.02802], [-6.86351, 112.02664], [-6.86481, 112.02538], [-6.86646, 112.02458], [-6.86824, 112.02395], [-6.87011, 112.02332], [-6.87194, 112.02267], [-6.87376, 112.02202], [-6.87558, 112.02136], [-6.8774, 112.02077], [-6.87919, 112.02018], [-6.88097, 112.01959], [-6.88275, 112.01913], [-6.88317, 112.02106], [-6.88364, 112.0229], [-6.88424, 112.0247], [-6.8853, 112.02623], [-6.88625, 112.02783], [-6.88681, 112.0296], [-6.8875, 112.03141], [-6.88836, 112.03309], [-6.88932, 112.03482], [-6.89018, 112.03656], [-6.89098, 112.03832], [-6.89178, 112.04009], [-6.89016, 112.04153], [-6.88808, 112.04284], [-6.88598, 112.0442], [-6.88395, 112.04555], [-6.88206, 112.04676], [-6.88078, 112.04561], [-6.87942, 112.04404], [-6.87787, 112.04253], [-6.8763, 112.04109], [-6.8747, 112.03968], [-6.87309, 112.03826], [-6.87141, 112.03679], [-6.86976, 112.03531], [-6.86811, 112.03387], [-6.86636, 112.03248], [-6.86464, 112.0311], [-6.86288, 112.02968], [-6.86198, 112.02833], [-6.86338, 112.0268], [-6.86487, 112.02533], [-6.86686, 112.02444], [-6.86893, 112.02373], [-6.87097, 112.02302], [-6.87297, 112.0223], [-6.87493, 112.0216], [-6.87689, 112.02093], [-6.87891, 112.02029], [-6.88091, 112.01964], [-6.8828, 112.01924], [-6.88325, 112.02138], [-6.88382, 112.0235], [-6.88475, 112.02555], [-6.8861, 112.02733], [-6.88674, 112.0294], [-6.88756, 112.03152], [-6.88857, 112.03348], [-6.88963, 112.03544], [-6.89056, 112.03741], [-6.89147, 112.03932], [-6.8909, 112.04108], [-6.88889, 112.04234], [-6.88691, 112.04362], [-6.88497, 112.04488], [-6.88301, 112.04617], [-6.8812, 112.04615], [-6.87978, 112.04445], [-6.87823, 112.04285], [-6.87658, 112.04137], [-6.87494, 112.03991], [-6.87329, 112.03846], [-6.87164, 112.037], [-6.87002, 112.03555], [-6.86832, 112.03405], [-6.86656, 112.03265], [-6.86481, 112.03123], [-6.86306, 112.02982], [-6.86188, 112.02843], [-6.86326, 112.0269], [-6.86469, 112.02547], [-6.86654, 112.02454], [-6.86864, 112.02383], [-6.87078, 112.02308], [-6.87311, 112.02225], [-6.87541, 112.02143], [-6.8776, 112.02071], [-6.87963, 112.02004], [-6.88143, 112.01945], [-6.88291, 112.01969], [-6.88332, 112.02172], [-6.88388, 112.0237], [-6.88481, 112.02561], [-6.8861, 112.02733], [-6.88674, 112.02937], [-6.88752, 112.03141], [-6.8885, 112.0333], [-6.88951, 112.03518], [-6.89046, 112.03719], [-6.89143, 112.03923], [-6.89107, 112.04096], [-6.8891, 112.04221], [-6.88713, 112.04348], [-6.88503, 112.04484], [-6.88298, 112.04619], [-6.88114, 112.04612], [-6.87967, 112.04431], [-6.87804, 112.04266], [-6.87622, 112.04106], [-6.87439, 112.03943], [-6.87257, 112.03782], [-6.87077, 112.03623], [-6.86905, 112.03469], [-6.86739, 112.03332], [-6.8657, 112.03197], [-6.86402, 112.03061], [-6.86233, 112.02926], [-6.86238, 112.02791], [-6.86371, 112.02644], [-6.86523, 112.02507], [-6.86713, 112.02436], [-6.86906, 112.02369], [-6.871, 112.023], [-6.87279, 112.02238], [-6.87477, 112.02167], [-6.87669, 112.02099], [-6.87884, 112.02032], [-6.88085, 112.01965], [-6.88274, 112.01916], [-6.88322, 112.02128], [-6.8838, 112.02344], [-6.88469, 112.02546], [-6.88604, 112.02723], [-6.8867, 112.02926], [-6.88744, 112.03131], [-6.88839, 112.03317], [-6.88943, 112.03502], [-6.89033, 112.03694], [-6.89123, 112.03885]] };
+  dist:37840, waktu:3763, elev:40, hr:149, kec:36.2,
+  prs: [{nama:"Contoh — Sprint Jembatan", waktu:754, rank:1}, {nama:"Contoh — Tanjakan Pasar", waktu:495, rank:2}],
+  pts: [[-6.89112, 112.04091], [-6.89017, 112.04152], [-6.88896, 112.04232], [-6.88766, 112.04316], [-6.88625, 112.04407], [-6.88483, 112.04498], [-6.88339, 112.04593], [-6.88189, 112.04681], [-6.88066, 112.04547], [-6.87948, 112.04411], [-6.87817, 112.04279], [-6.87686, 112.04162], [-6.87552, 112.04043], [-6.87413, 112.03921], [-6.87272, 112.03797], [-6.87128, 112.03669], [-6.86985, 112.03542], [-6.86841, 112.03415], [-6.86689, 112.03293], [-6.86537, 112.03171], [-6.86385, 112.03048], [-6.86234, 112.02926], [-6.86228, 112.02802], [-6.86351, 112.02664], [-6.86481, 112.02538], [-6.86646, 112.02458], [-6.86824, 112.02395], [-6.87011, 112.02332], [-6.87194, 112.02267], [-6.87376, 112.02202], [-6.87558, 112.02136], [-6.8774, 112.02077], [-6.87919, 112.02018], [-6.88097, 112.01959], [-6.88275, 112.01913], [-6.88317, 112.02106], [-6.88364, 112.0229], [-6.88424, 112.0247], [-6.8853, 112.02623], [-6.88625, 112.02783], [-6.88681, 112.0296], [-6.8875, 112.03141], [-6.88836, 112.03309], [-6.88932, 112.03482], [-6.89018, 112.03656], [-6.89098, 112.03832], [-6.89178, 112.04009], [-6.89016, 112.04153], [-6.88808, 112.04284], [-6.88598, 112.0442], [-6.88395, 112.04555], [-6.88206, 112.04676], [-6.88078, 112.04561], [-6.87942, 112.04404], [-6.87787, 112.04253], [-6.8763, 112.04109], [-6.8747, 112.03968], [-6.87309, 112.03826], [-6.87141, 112.03679], [-6.86976, 112.03531], [-6.86811, 112.03387], [-6.86636, 112.03248], [-6.86464, 112.0311], [-6.86288, 112.02968], [-6.86198, 112.02833], [-6.86338, 112.0268], [-6.86487, 112.02533], [-6.86686, 112.02444], [-6.86893, 112.02373], [-6.87097, 112.02302], [-6.87297, 112.0223], [-6.87493, 112.0216], [-6.87689, 112.02093], [-6.87891, 112.02029], [-6.88091, 112.01964], [-6.8828, 112.01924], [-6.88325, 112.02138], [-6.88382, 112.0235], [-6.88475, 112.02555], [-6.8861, 112.02733], [-6.88674, 112.0294], [-6.88756, 112.03152], [-6.88857, 112.03348], [-6.88963, 112.03544], [-6.89056, 112.03741], [-6.89147, 112.03932], [-6.8909, 112.04108], [-6.88889, 112.04234], [-6.88691, 112.04362], [-6.88497, 112.04488], [-6.88301, 112.04617], [-6.8812, 112.04615], [-6.87978, 112.04445], [-6.87823, 112.04285], [-6.87658, 112.04137], [-6.87494, 112.03991], [-6.87329, 112.03846], [-6.87164, 112.037], [-6.87002, 112.03555], [-6.86832, 112.03405], [-6.86656, 112.03265], [-6.86481, 112.03123], [-6.86306, 112.02982], [-6.86188, 112.02843], [-6.86326, 112.0269], [-6.86469, 112.02547], [-6.86654, 112.02454], [-6.86864, 112.02383], [-6.87078, 112.02308], [-6.87311, 112.02225], [-6.87541, 112.02143], [-6.8776, 112.02071], [-6.87963, 112.02004], [-6.88143, 112.01945], [-6.88291, 112.01969], [-6.88332, 112.02172], [-6.88388, 112.0237], [-6.88481, 112.02561], [-6.8861, 112.02733], [-6.88674, 112.02937], [-6.88752, 112.03141], [-6.8885, 112.0333], [-6.88951, 112.03518], [-6.89046, 112.03719], [-6.89143, 112.03923], [-6.89107, 112.04096], [-6.8891, 112.04221], [-6.88713, 112.04348], [-6.88503, 112.04484], [-6.88298, 112.04619], [-6.88114, 112.04612], [-6.87967, 112.04431], [-6.87804, 112.04266], [-6.87622, 112.04106], [-6.87439, 112.03943], [-6.87257, 112.03782], [-6.87077, 112.03623], [-6.86905, 112.03469], [-6.86739, 112.03332], [-6.8657, 112.03197], [-6.86402, 112.03061], [-6.86233, 112.02926], [-6.86238, 112.02791], [-6.86371, 112.02644], [-6.86523, 112.02507], [-6.86713, 112.02436], [-6.86906, 112.02369], [-6.871, 112.023], [-6.87279, 112.02238], [-6.87477, 112.02167], [-6.87669, 112.02099], [-6.87884, 112.02032], [-6.88085, 112.01965], [-6.88274, 112.01916], [-6.88322, 112.02128], [-6.8838, 112.02344], [-6.88469, 112.02546], [-6.88604, 112.02723], [-6.8867, 112.02926], [-6.88744, 112.03131], [-6.88839, 112.03317], [-6.88943, 112.03502], [-6.89033, 112.03694], [-6.89123, 112.03885]] };
 
 /* ================= state ================= */
 const S = {
@@ -168,7 +171,7 @@ const S = {
   foto: null,           // Image latar
   tpl: "pursuit",
   warna: "putih",
-  tampil: { judul:true, tanggal:true, rute:true, jarak:true, stats:true },
+  tampil: { judul:true, tanggal:true, rute:true, jarak:true, stats:true, pr:true },
   geser: {},            // per template: { elId: {dx,dy,skala} }
   pilih: null,          // elemen terpilih
   kotak: {},            // bbox elemen hasil render terakhir
@@ -214,15 +217,19 @@ async function muatAktivitas(){
       const d = document.createElement("div"); d.className="akt";
       d.innerHTML = '<div><div class="nm"></div><div class="dt"></div></div><div class="km"></div>';
       d.querySelector(".nm").textContent = a.name || a.sport_type || "Ride";
-      d.querySelector(".dt").textContent = fmtTanggal(a.start_date_local)+" • "+fmtWaktu(a.moving_time);
+      d.querySelector(".dt").textContent = fmtTanggal(a.start_date_local)+" • "+fmtWaktu(a.moving_time)+
+        (a.pr_count ? " • 🏆 "+a.pr_count+" PR" : "");
       d.querySelector(".km").textContent = koma(a.distance/1000,1)+" km";
-      d.onclick = ()=> bukaEditor({
-        nama: a.name||"Ride", tanggal: a.start_date_local, dist: a.distance,
-        waktu: a.moving_time, elev: Math.round(a.total_elevation_gain||0),
-        hr: a.average_heartrate ? Math.round(a.average_heartrate) : null,
-        kec: a.average_speed ? a.average_speed*3.6 : 0,
-        pts: (a.map && a.map.summary_polyline) ? decodePolyline(a.map.summary_polyline) : []
-      });
+      d.onclick = ()=>{
+        const akt = {
+          id: a.id, nama: a.name||"Ride", tanggal: a.start_date_local, dist: a.distance,
+          waktu: a.moving_time, elev: Math.round(a.total_elevation_gain||0),
+          hr: a.average_heartrate ? Math.round(a.average_heartrate) : null,
+          kec: a.average_speed ? a.average_speed*3.6 : 0, prs: [],
+          pts: (a.map && a.map.summary_polyline) ? decodePolyline(a.map.summary_polyline) : []
+        };
+        bukaEditor(akt); ambilDetailPR(akt);
+      };
       el.appendChild(d);
     });
   }catch(e){ el.innerHTML=""; pesan("Strava: "+e.message, false); }
@@ -245,6 +252,28 @@ $("#btnKodeManual").onclick = async ()=>{
     pesan("Strava terhubung. Memuat aktivitas…", true); muatAktivitas();
   }catch(e){ pesan(e.message, false); }
 };
+
+/* ================= detail aktivitas: PR ================= */
+async function ambilDetailPR(akt){
+  if(!akt.id) return;
+  try{
+    const tok = await tokenValid(); if(!tok) return;
+    const r = await fetch("https://www.strava.com/api/v3/activities/"+akt.id,
+      { headers:{ Authorization:"Bearer "+tok } });
+    if(!r.ok) return;
+    const d = await r.json();
+    const prs = [];
+    (d.segment_efforts||[]).forEach(se=>{ if(se.pr_rank)
+      prs.push({ nama:se.name, waktu:se.elapsed_time, rank:se.pr_rank }); });
+    (d.best_efforts||[]).forEach(be=>{ if(be.pr_rank)
+      prs.push({ nama:be.name, waktu:be.elapsed_time, rank:be.pr_rank }); });
+    prs.sort((x,y)=> x.rank-y.rank || x.waktu-y.waktu);
+    akt.prs = prs;
+    if(d.map && d.map.polyline){ const pts = decodePolyline(d.map.polyline);
+      if(pts.length > (akt.pts||[]).length) akt.pts = pts; }
+    if(S.akt === akt) gambar();
+  }catch(e){ /* diam saja: overlay tetap jalan tanpa data PR */ }
+}
 
 /* ================= GPX ================= */
 $("#btnGpx").onclick = ()=> $("#inGpx").click();
@@ -285,11 +314,11 @@ const W = 1080, H = 1350;
 const WARNA = { putih:"#ffffff", hitam:"#141414", oranye:"#fc4c02" };
 const TPL = {
   pursuit: { tanggal:{x:.5,y:.055,s:1}, rute:{x:.5,y:.30,s:1}, jarak:{x:.5,y:.60,s:1},
-             stats:{x:.5,y:.86,s:1}, judul:{x:.5,y:.955,s:1} },
-  minimal: { judul:{x:.06,y:.055,s:.85}, tanggal:{x:.06,y:.105,s:.8}, jarak:{x:.06,y:.80,s:.9},
-             stats:{x:.06,y:.885,s:.9}, rute:{x:.80,y:.16,s:.55} },
+             pr:{x:.5,y:.735,s:.95}, stats:{x:.5,y:.86,s:1}, judul:{x:.5,y:.955,s:1} },
+  minimal: { judul:{x:.06,y:.055,s:.85}, tanggal:{x:.06,y:.105,s:.8}, pr:{x:.06,y:.32,s:.85},
+             jarak:{x:.06,y:.80,s:.9}, stats:{x:.06,y:.885,s:.9}, rute:{x:.80,y:.16,s:.55} },
   poster:  { rute:{x:.5,y:.24,s:1.15}, jarak:{x:.5,y:.52,s:1.25}, tanggal:{x:.5,y:.665,s:1},
-             stats:{x:.5,y:.78,s:1.05}, judul:{x:.5,y:.93,s:1} },
+             stats:{x:.5,y:.78,s:1.05}, pr:{x:.5,y:.868,s:.85}, judul:{x:.5,y:.93,s:1} },
 };
 function font(px, wgt){ return wgt+" "+px+"px Montserrat, Arial, sans-serif"; }
 function teksTengah(x, y, teks, px, wgt, warna, spasi=0){
@@ -352,6 +381,66 @@ function gambarStats(cx, cy, skala, rataKiri){
   ctx.restore();
   return { x:cx, y:cy-26*skala, w, h:52*skala };
 }
+const MEDALI = { 1:"🏆", 2:"🥈", 3:"🥉" };
+function gambarPR(cx, cy, skala, kiri){
+  const prs = S.akt.prs || [], warna = WARNA[S.warna];
+  if(!prs.length){
+    if(EKSPOR) return null;
+    ctx.save(); ctx.globalAlpha = .45;
+    let k;
+    if(kiri){
+      const t = "TIDAK ADA PR DI AKTIVITAS INI";
+      ctx.font = font(25*skala, 600); ctx.fillStyle = warna;
+      ctx.textAlign = "left"; ctx.textBaseline = "middle";
+      ctx.fillText(t, cx, cy);
+      k = { x:cx, y:cy-15*skala, w:ctx.measureText(t).width, h:30*skala };
+    } else {
+      k = teksTengah(cx, cy, "TIDAK ADA PR DI AKTIVITAS INI", 25*skala, 600, warna, 3*skala);
+    }
+    ctx.restore(); return k;
+  }
+  const maks = 3;
+  const daftar = prs.slice(0, maks).map(p=>{
+    let nama = p.nama || "Segmen";
+    const med = MEDALI[p.rank] || "🏆";
+    let teks = med+" "+nama+" — "+fmtWaktu(p.waktu);
+    ctx.font = font(37*skala, 700);
+    while(nama.length > 4 && ctx.measureText(teks).width > 900*skala){
+      nama = nama.slice(0,-2);
+      teks = med+" "+nama+"… — "+fmtWaktu(p.waktu);
+    }
+    return teks;
+  });
+  if(prs.length > maks) daftar.push("+ "+(prs.length-maks)+" PR LAINNYA");
+  const lh = 56*skala, hHead = 46*skala, totalH = hHead + lh*daftar.length;
+  const y0 = cy - totalH/2;
+  ctx.save();
+  ctx.shadowColor = S.warna==="hitam" ? "rgba(255,255,255,.35)" : "rgba(0,0,0,.5)";
+  ctx.shadowBlur = 10; ctx.shadowOffsetY = 2;
+  let minX = Infinity, maxX = -Infinity;
+  const catat = k=>{ if(!k) return; minX = Math.min(minX, k.x); maxX = Math.max(maxX, k.x+k.w); };
+  if(kiri){
+    ctx.fillStyle = warna; ctx.textBaseline = "middle"; ctx.textAlign = "left";
+    ctx.font = font(25*skala, 700);
+    const head = "P E R S O N A L   R E C O R D";
+    ctx.fillText(head, cx, y0 + hHead/2);
+    catat({ x:cx, w:ctx.measureText(head).width });
+    daftar.forEach((t, i)=>{
+      const lebih = i === daftar.length-1 && prs.length > maks;
+      ctx.font = font((lebih ? 28 : 37)*skala, 700);
+      ctx.fillText(t, cx, y0 + hHead + lh*(i + .5));
+      catat({ x:cx, w:ctx.measureText(t).width });
+    });
+  } else {
+    catat(teksTengah(cx, y0 + hHead/2, "PERSONAL RECORD", 25*skala, 700, warna, 7*skala));
+    daftar.forEach((t, i)=>{
+      const lebih = i === daftar.length-1 && prs.length > maks;
+      catat(teksTengah(cx, y0 + hHead + lh*(i + .5), t, (lebih ? 28 : 37)*skala, 700, warna));
+    });
+  }
+  ctx.restore();
+  return { x:minX, y:y0, w:maxX-minX, h:totalH };
+}
 function gambar(){
   ctx.clearRect(0,0,W,H);
   S.kotak = {};
@@ -384,12 +473,13 @@ function gambar(){
     return teksTengah(x, y, t, 165*s, 800, warna); });
   ctx.restore();
   taruh("stats", (x,y,s)=> gambarStats(x, y, s, kiri));
+  taruh("pr", (x,y,s)=> gambarPR(x, y, s, kiri));
   if(S.pilih && S.kotak[S.pilih]){ const k = S.kotak[S.pilih];
     ctx.save(); ctx.strokeStyle="#fc4c02"; ctx.lineWidth=3; ctx.setLineDash([12,9]);
     ctx.strokeRect(k.x-10, k.y-10, k.w+20, k.h+20); ctx.restore(); }
 }
 /* drag */
-let seret = null;
+let seret = null, EKSPOR = false;
 function posSentuh(e){ const r = cv.getBoundingClientRect();
   return { x:(e.clientX-r.left)/r.width*W, y:(e.clientY-r.top)/r.height*H }; }
 cv.addEventListener("pointerdown", e=>{
@@ -424,10 +514,10 @@ $("#inFoto").onchange = e=>{ const f = e.target.files[0]; if(!f) return;
   im.src = URL.createObjectURL(f); };
 $("#btnKembali").onclick = ()=>{ $("#viewEditor").classList.remove("aktif");
   $("#viewBeranda").classList.add("aktif"); window.scrollTo(0,0); };
-$("#btnSimpan").onclick = ()=>{ const pil = S.pilih; S.pilih = null; gambar();
+$("#btnSimpan").onclick = ()=>{ const pil = S.pilih; S.pilih = null; EKSPOR = true; gambar();
   cv.toBlob(b=>{ const a = document.createElement("a");
     a.href = URL.createObjectURL(b); a.download = "overlay-ride.png"; a.click();
-    setTimeout(()=>{ S.pilih = pil; gambar(); }, 300); }); };
+    setTimeout(()=>{ S.pilih = pil; EKSPOR = false; gambar(); }, 300); }); };
 function bukaEditor(akt){ S.akt = akt; S.pilih = null;
   $("#viewBeranda").classList.remove("aktif"); $("#viewEditor").classList.add("aktif");
   window.scrollTo(0,0); gambar(); }
