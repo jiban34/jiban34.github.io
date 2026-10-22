@@ -1079,7 +1079,12 @@ function gambar(){
     const k = fn(cx, cy, d.s * g.skala);
     if(k) S.kotak[id] = k;
   };
-  taruh("tanggal", (x,y,s)=> teksTengah(x, y, fmtTanggal(a.tanggal), 37*s, 600, warna, 9*s));
+  taruh("tanggal", (x,y,s)=>{ const t = fmtTanggal(a.tanggal);
+    if(kiri){ ctx.font = font(37*s,600); // geser titik tengah agar tepi kiri pas di x
+      const sp = 9*s;
+      const total = [...t].reduce((a2,c)=> a2 + ctx.measureText(c).width, 0) + sp*(t.length-1);
+      return teksTengah(x + total/2, y, t, 37*s, 600, warna, sp); }
+    return teksTengah(x, y, t, 37*s, 600, warna, 9*s); });
   taruh("judul", (x,y,s)=>{ ctx.textAlign = kiri?"left":"center";
     const fj = geserEl("judul").fFam;
     FONT_OVERRIDE = fj ? (px,w)=> fontGaya(px, fj, w, false) : null;
@@ -1094,7 +1099,12 @@ function gambar(){
   taruh("jarak", (x,y,s)=>{ const t = koma(a.dist/1000)+" km";
     const fj = geserEl("jarak").fFam;
     FONT_OVERRIDE = fj ? (px,w)=> fontGaya(px, fj, w, false) : null;
-    const k = teksTengah(x, y, t, 165*s, 800, warna);
+    let k;
+    if(kiri){ ctx.font = FONT_OVERRIDE ? FONT_OVERRIDE(165*s, 800) : font(165*s, 800);
+      ctx.fillStyle = warna; ctx.textAlign = "left"; ctx.textBaseline = "middle";
+      ctx.fillText(t, x, y);
+      k = { x, y: y-82*s, w: ctx.measureText(t).width, h: 165*s }; }
+    else k = teksTengah(x, y, t, 165*s, 800, warna);
     FONT_OVERRIDE = null; return k; });
   ctx.restore();
   taruh("stats", (x,y,s)=> gambarStats(x, y, s, kiri));
