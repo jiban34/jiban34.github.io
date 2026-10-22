@@ -55,11 +55,21 @@
   .titik-warna.aktif { border-color: #fc4c02; box-shadow: 0 0 0 2px #fc4c02 inset; }
   #panelStiker { border-color: #fc4c02; }
   #viewEditor { padding-bottom: 86px; }
-  .sheet { position: fixed; left: 0; right: 0; bottom: 57px; max-height: 62vh; overflow-y: auto;
-    background: #17171d; border-top: 1px solid #33333e; border-radius: 18px 18px 0 0;
+  .sheet { position: fixed; left: 0; right: 0; bottom: 57px; max-height: 40vh; overflow-y: auto;
+    background: rgba(23,23,29,.88); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border-top: 1px solid #33333e; border-radius: 18px 18px 0 0;
     padding: 6px 16px 20px; z-index: 45; transform: translateY(112%); transition: transform .25s ease;
     box-shadow: 0 -12px 32px rgba(0,0,0,.5); }
   .sheet.buka { transform: none; }
+  #sheetAtur { max-height: 38vh; }
+  #barMini { position: fixed; left: 10px; right: 10px; bottom: 65px; z-index: 44; display: none;
+    align-items: center; gap: 7px; background: rgba(18,18,24,.92); backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px); border: 1px solid #3a3a46; border-radius: 14px;
+    padding: 8px 10px; box-shadow: 0 8px 24px rgba(0,0,0,.5); }
+  #barMini.tampil { display: flex; }
+  #barMini input[type=range] { flex: 1; }
+  .btn-mini { background: #26262f; color: #e8e8ee; border: 1px solid #3a3a46; border-radius: 9px;
+    padding: 7px 10px; font-size: 13px; line-height: 1; }
   .sheet .judul-seksi:first-child { margin-top: 10px; }
   #barBawah { position: fixed; left: 0; right: 0; bottom: 0; height: 57px; z-index: 50;
     display: flex; background: #121216; border-top: 1px solid #2a2a33; }
@@ -142,23 +152,6 @@
   </div>
 
   <div class="sheet" id="sheetAtur">
-  <div class="judul-seksi">TAMPILKAN</div>
-  <div class="deret" id="deretToggle">
-    <label class="tog"><input type="checkbox" data-el="judul" checked> Judul</label>
-    <label class="tog"><input type="checkbox" data-el="tanggal" checked> Tanggal</label>
-    <label class="tog"><input type="checkbox" data-el="rute" checked> Rute</label>
-    <label class="tog"><input type="checkbox" data-el="jarak" checked> Jarak</label>
-    <label class="tog"><input type="checkbox" data-el="stats" checked> Statistik</label>
-    <label class="tog"><input type="checkbox" data-el="pr" checked> PR 🏆</label>
-  </div>
-
-  <div class="judul-seksi">WARNA TEKS</div>
-  <div class="deret" id="deretWarna">
-    <button class="btn-biasa chip aktif" data-warna="putih">Putih</button>
-    <button class="btn-biasa chip" data-warna="hitam">Hitam</button>
-    <button class="btn-biasa chip" data-warna="oranye">Oranye</button>
-  </div>
-
   <div class="judul-seksi">UKURAN ELEMEN TERPILIH — <span id="namaElemen">ketuk elemen di gambar untuk memilih, lalu geser</span></div>
   <input type="range" id="inUkuran" min="50" max="200" value="100">
 
@@ -218,6 +211,23 @@
     </div>
   </div>
 
+  <div class="judul-seksi">TAMPILKAN</div>
+  <div class="deret" id="deretToggle">
+    <label class="tog"><input type="checkbox" data-el="judul" checked> Judul</label>
+    <label class="tog"><input type="checkbox" data-el="tanggal" checked> Tanggal</label>
+    <label class="tog"><input type="checkbox" data-el="rute" checked> Rute</label>
+    <label class="tog"><input type="checkbox" data-el="jarak" checked> Jarak</label>
+    <label class="tog"><input type="checkbox" data-el="stats" checked> Statistik</label>
+    <label class="tog"><input type="checkbox" data-el="pr" checked> PR 🏆</label>
+  </div>
+
+  <div class="judul-seksi">WARNA TEKS</div>
+  <div class="deret" id="deretWarna">
+    <button class="btn-biasa chip aktif" data-warna="putih">Putih</button>
+    <button class="btn-biasa chip" data-warna="hitam">Hitam</button>
+    <button class="btn-biasa chip" data-warna="oranye">Oranye</button>
+  </div>
+
   </div>
 
   <div class="sheet" id="sheetGaleri">
@@ -274,6 +284,14 @@
     <button data-sheet="sheetGaleri">✦ Stiker</button>
     <button data-sheet="sheetAtur">⚙️ Atur</button>
     <button class="simpan" id="btnSimpan2">⬇ Simpan</button>
+  </div>
+
+  <div id="barMini">
+    <button class="btn-mini" data-rmini="kiri" title="Rata kiri">⬅</button>
+    <button class="btn-mini" data-rmini="tengah" title="Rata tengah">⬌</button>
+    <button class="btn-mini" data-rmini="kanan" title="Rata kanan">➡</button>
+    <input type="range" id="inUkuranMini" min="50" max="200" value="100">
+    <button class="btn-mini" id="btnMiniTutup" title="Selesai memilih">✕</button>
   </div>
 </div>
 
@@ -1120,7 +1138,7 @@ cv.addEventListener("pointerdown", e=>{
     else blokF.style.display = "none";
     if(S.modeFoto) setModeFoto(false);
     sinkronPanelStiker();
-    cv.setPointerCapture(e.pointerId); gambar(); }
+    cv.setPointerCapture(e.pointerId); gambar(); updateBarMini(); }
 });
 cv.addEventListener("pointermove", e=>{
   if(seretFoto){ const p = posSentuh(e);
@@ -1139,6 +1157,7 @@ $("#inUkuran").oninput = e=>{ if(!S.pilih) return;
   const inst = stikerDariId(S.pilih);
   if(inst) inst.skala = e.target.value/100;
   else geserEl(S.pilih).skala = e.target.value/100;
+  $("#inUkuranMini").value = e.target.value;
   gambar(); };
 $("#inTebal").oninput = e=>{ geserEl("rute").tebal = e.target.value/100;
   $("#lblTebal").textContent = e.target.value+"%"; gambar(); };
@@ -1153,6 +1172,20 @@ function sebarRata(mode){ const id = S.pilih; if(!id) return;
   gambar(); }
 $("#deretRata").onclick = e=>{ const b = e.target.closest("[data-rata]");
   if(b) sebarRata(b.dataset.rata); };
+function updateBarMini(){ const bm = $("#barMini"); if(!bm) return;
+  const ada = !!S.pilih && !document.querySelector(".sheet.buka");
+  bm.classList.toggle("tampil", ada);
+  if(ada) $("#inUkuranMini").value = $("#inUkuran").value; }
+$("#barMini").addEventListener("click", e=>{ const b = e.target.closest("[data-rmini]");
+  if(b) sebarRata(b.dataset.rmini); });
+$("#inUkuranMini").oninput = e=>{ if(!S.pilih) return;
+  const inst = stikerDariId(S.pilih);
+  if(inst) inst.skala = e.target.value/100;
+  else geserEl(S.pilih).skala = e.target.value/100;
+  $("#inUkuran").value = e.target.value; gambar(); };
+$("#btnMiniTutup").onclick = ()=>{ S.pilih = null; sinkronPanelStiker();
+  $("#blokFont").style.display = "none"; $("#blokStats").style.display = "none";
+  $("#blokTebal").style.display = "none"; gambar(); updateBarMini(); };
 function setModeFoto(on){ S.modeFoto = on;
   $("#btnGeserFoto").classList.toggle("aktif", on);
   $("#blokFoto").style.display = on ? "block" : "none";
@@ -1301,6 +1334,7 @@ $("#sheetAtur").appendChild($("#panelStiker"));
 function tutupSheet(){
   document.querySelectorAll(".sheet").forEach(sh=> sh.classList.remove("buka"));
   document.querySelectorAll("#barBawah [data-sheet]").forEach(b=> b.classList.remove("aktif"));
+  if(typeof updateBarMini === "function") updateBarMini();
 }
 function bukaSheet(id){
   const target = document.getElementById(id);
@@ -1308,7 +1342,10 @@ function bukaSheet(id){
   tutupSheet();
   if(!sudah){ target.classList.add("buka");
     document.querySelectorAll("#barBawah [data-sheet]").forEach(b=>
-      b.classList.toggle("aktif", b.dataset.sheet === id)); }
+      b.classList.toggle("aktif", b.dataset.sheet === id));
+    const bc = document.getElementById("bungkusCanvas");
+    if(bc && bc.scrollIntoView) bc.scrollIntoView({ behavior:"smooth", block:"start" }); }
+  if(typeof updateBarMini === "function") updateBarMini();
 }
 $("#barBawah").addEventListener("click", e=>{
   const b = e.target.closest("[data-sheet]"); if(b) bukaSheet(b.dataset.sheet);
@@ -1411,7 +1448,7 @@ $("#deretWarnaStk").onclick = e=>{ const b = e.target.closest("[data-hex]"); if(
   inst.warna = b.dataset.hex; sinkronPanelStiker(); gambar(); };
 $("#btnHapusStk").onclick = ()=>{ const inst = stikerDariId(S.pilih); if(!inst) return;
   S.stiker = S.stiker.filter(i=> i !== inst); S.pilih = null;
-  sinkronPanelStiker(); gambar(); };
+  sinkronPanelStiker(); gambar(); updateBarMini(); };
 $("#btnDuplikatStk").onclick = ()=>{ const inst = stikerDariId(S.pilih); if(!inst) return;
   const baru = { ...inst, uid: ++stkUid, x: Math.min(inst.x + .045, .95), y: Math.min(inst.y + .045, .95),
     pilih: inst.pilih ? inst.pilih.slice() : null, slot: inst.slot ? inst.slot.slice() : null };
