@@ -132,6 +132,13 @@
 <div id="viewEditor" class="view">
   <div id="bungkusCanvas"><canvas id="cv" width="1080" height="1350"></canvas></div>
 
+  <div class="deret" id="deretRasio" style="justify-content:center; margin-bottom:6px">
+    <span class="kecil" style="align-self:center">Format:</span>
+    <button class="btn-biasa chip aktif" data-rasio="4:5">4:5 Potret</button>
+    <button class="btn-biasa chip" data-rasio="1:1">1:1 Kotak</button>
+    <button class="btn-biasa chip" data-rasio="9:16">9:16 Story</button>
+  </div>
+
   <div class="deret" style="justify-content:center; margin-bottom:6px">
     <button class="btn-biasa btn-kecil" id="btnFoto">📷 Pilih Foto</button>
     <button class="btn-biasa btn-kecil" id="btnGeserFoto">🖼 Atur Foto</button>
@@ -501,7 +508,7 @@ $("#btnDemo").onclick = ()=> bukaEditor({ ...DEMO });
 
 /* ================= EDITOR ================= */
 const cv = $("#cv"), ctx = cv.getContext("2d");
-const W = 1080, H = 1350;
+const W = 1080; let H = 1350; // H berubah mengikuti format: 4:5=1350, 1:1=1080, 9:16=1920
 const WARNA = { putih:"#ffffff", hitam:"#141414", oranye:"#fc4c02" };
 const TPL = {
   pursuit: { tanggal:{x:.5,y:.055,s:1}, rute:{x:.5,y:.30,s:1}, jarak:{x:.5,y:.60,s:1},
@@ -1143,7 +1150,7 @@ cv.addEventListener("pointerdown", e=>{
     else blokF.style.display = "none";
     if(S.modeFoto) setModeFoto(false);
     sinkronPanelStiker();
-    cv.setPointerCapture(e.pointerId); gambar(); updateBarMini(); }
+    cv.setPointerCapture(e.pointerId); gambar(); updateBarMini(); gulirKeElemen(); }
 });
 cv.addEventListener("pointermove", e=>{
   if(seretFoto){ const p = posSentuh(e);
@@ -1177,6 +1184,19 @@ function sebarRata(mode){ const id = S.pilih; if(!id) return;
   gambar(); }
 $("#deretRata").onclick = e=>{ const b = e.target.closest("[data-rata]");
   if(b) sebarRata(b.dataset.rata); };
+const RASIO_H = { "4:5":1350, "1:1":1080, "9:16":1920 };
+$("#deretRasio").onclick = e=>{ const b = e.target.closest("[data-rasio]"); if(!b) return;
+  document.querySelectorAll("#deretRasio .chip").forEach(c=>
+    c.classList.toggle("aktif", c===b));
+  H = RASIO_H[b.dataset.rasio]; cv.height = H; gambar(); };
+function gulirKeElemen(){ // geser halaman agar elemen terpilih terlihat DI ATAS panel yang terbuka
+  if(!document.querySelector(".sheet.buka")) return;
+  const k = S.kotak[S.pilih]; if(!k) return;
+  const r = cv.getBoundingClientRect(); if(!r.height) return;
+  const elY = r.top + (k.y + k.h/2)/H * r.height;
+  const ruang = window.innerHeight - 57 - window.innerHeight*0.40; // area bebas di atas panel+bar
+  const geser = elY - ruang*0.45;
+  if(Math.abs(geser) > 8 && window.scrollBy) window.scrollBy({ top: geser, behavior:"smooth" }); }
 function updateBarMini(){ const bm = $("#barMini"); if(!bm) return;
   const ada = !!S.pilih && !document.querySelector(".sheet.buka");
   bm.classList.toggle("tampil", ada);
@@ -1348,8 +1368,9 @@ function bukaSheet(id){
   if(!sudah){ target.classList.add("buka");
     document.querySelectorAll("#barBawah [data-sheet]").forEach(b=>
       b.classList.toggle("aktif", b.dataset.sheet === id));
-    const bc = document.getElementById("bungkusCanvas");
-    if(bc && bc.scrollIntoView) bc.scrollIntoView({ behavior:"smooth", block:"start" }); }
+    if(S.pilih && S.kotak[S.pilih]) gulirKeElemen();
+    else { const bc = document.getElementById("bungkusCanvas");
+      if(bc && bc.scrollIntoView) bc.scrollIntoView({ behavior:"smooth", block:"start" }); } }
   if(typeof updateBarMini === "function") updateBarMini();
 }
 $("#barBawah").addEventListener("click", e=>{
