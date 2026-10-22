@@ -304,6 +304,11 @@ const BULAN = ["JANUARI","FEBRUARI","MARET","APRIL","MEI","JUNI","JULI","AGUSTUS
 const koma = (n, d=2) => n.toFixed(d).replace(".", ",");
 function fmtWaktu(sec){ sec = Math.round(sec||0); const h=Math.floor(sec/3600), m=Math.floor(sec%3600/60), s=sec%60;
   return h ? h+":"+String(m).padStart(2,"0")+":"+String(s).padStart(2,"0") : m+":"+String(s).padStart(2,"0"); }
+function tglLokal(s){ // start_date_local Strava = jam lokal tapi berakhiran "Z" -> buang Z-nya
+  return (s || "").replace(/Z$/, ""); }
+function isoLokal(d){ const p = n=> String(n).padStart(2,"0");
+  return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+"T"+
+    p(d.getHours())+":"+p(d.getMinutes())+":"+p(d.getSeconds()); }
 function fmtTanggal(iso){ const d = new Date(iso); if (isNaN(d)) return "";
   return HARI[d.getDay()]+", "+d.getDate()+" "+BULAN[d.getMonth()]+" "+d.getFullYear(); }
 function hav(a,b){ const R=6371000, p1=a[0]*Math.PI/180, p2=b[0]*Math.PI/180,
@@ -382,7 +387,7 @@ async function muatAktivitas(){
     const r = await fetch("https://www.strava.com/api/v3/athlete/activities?per_page=30",
       { headers:{ Authorization:"Bearer "+tok } });
     const arr = await r.json(); if(!r.ok) throw new Error(arr.message||"Gagal memuat.");
-    S.daftarMentah = arr.map(a=>({ id:a.id, tanggal:a.start_date_local, dist:a.distance||0, waktu:a.moving_time||0 }));
+    S.daftarMentah = arr.map(a=>({ id:a.id, tanggal:tglLokal(a.start_date_local), dist:a.distance||0, waktu:a.moving_time||0 }));
     $("#statusAkun").textContent = "Strava: "+(LS.k.atlet||"terhubung");
     $("#kartuHubung").style.display = "none";
     if(!arr.length){ el.innerHTML = '<p class="kecil">Belum ada aktivitas di akun ini.</p>'; return; }
@@ -391,12 +396,12 @@ async function muatAktivitas(){
       const d = document.createElement("div"); d.className="akt";
       d.innerHTML = '<div><div class="nm"></div><div class="dt"></div></div><div class="km"></div>';
       d.querySelector(".nm").textContent = a.name || a.sport_type || "Ride";
-      d.querySelector(".dt").textContent = fmtTanggal(a.start_date_local)+" • "+fmtWaktu(a.moving_time)+
+      d.querySelector(".dt").textContent = fmtTanggal(tglLokal(a.start_date_local))+" • "+fmtWaktu(a.moving_time)+
         (a.pr_count ? " • 🏆 "+a.pr_count+" PR" : "");
       d.querySelector(".km").textContent = koma(a.distance/1000,1)+" km";
       d.onclick = ()=>{
         const akt = {
-          id: a.id, nama: a.name||"Ride", tanggal: a.start_date_local, dist: a.distance,
+          id: a.id, nama: a.name||"Ride", tanggal: tglLokal(a.start_date_local), dist: a.distance,
           waktu: a.moving_time, elapsed: a.elapsed_time || a.moving_time,
           elev: Math.round(a.total_elevation_gain||0),
           hr: a.average_heartrate ? Math.round(a.average_heartrate) : null,
@@ -483,7 +488,7 @@ $("#inGpx").onchange = e=>{
       for(let i=1;i<times.length;i++){ if(times[i]&&times[i-1]){ const dt=(times[i]-times[i-1])/1000;
         elapsed+=dt; if(dt>0 && hav(pts[i-1],pts[i])/dt>0.5) moving+=dt; } }
       const hv = hrs.filter(x=>x);
-      bukaEditor({ nama:"Ride GPX", tanggal: times.find(t=>t) ? times.find(t=>t).toISOString() : new Date().toISOString(),
+      bukaEditor({ nama:"Ride GPX", tanggal: isoLokal(times.find(t=>t) || new Date()),
         dist, waktu: moving||elapsed, elapsed: elapsed||moving, elev: Math.round(gain),
         hr: hv.length?Math.round(hv.reduce((a,b)=>a+b,0)/hv.length):null,
         power: null, cad: null, kal: null, prCount: 0,
