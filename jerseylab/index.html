@@ -44,12 +44,26 @@
   .hidden { display:none !important; }
   #toast { position:fixed; left:50%; bottom:22px; transform:translateX(-50%); background:#232f38; border:1px solid #41525f;
            color:#fff; padding:9px 16px; border-radius:20px; font-size:13px; opacity:0; pointer-events:none; transition:opacity .25s; z-index:9; }
+  .chip.mode.on { background:#2f6db3; border-color:#2f6db3; color:#fff; }
+  #patternWrap { background:#141a1f; border-top:1px solid #26313b; padding:12px 14px 26px; }
+  #patternStage { background:#171e24; border:1px solid #26313b; border-radius:8px; }
+  #patternStage .pcut { fill:#232b33; stroke:#e8ecef; stroke-width:1.6; stroke-linejoin:round; }
+  #patternStage .pallow { fill:none; stroke:#7e93a5; stroke-width:1; stroke-dasharray:5 4; }
+  #patternStage .pmark { fill:none; stroke:#ff7847; stroke-width:1.1; stroke-dasharray:4 3; }
+  #patternStage .ptitle { fill:#ffd9c7; font-weight:700; }
+  #patternStage .ptxt { fill:#9fb0bd; }
+  input[type=number] { background:#0c1013; border:1px solid #33424f; color:#fff; border-radius:8px; padding:8px 10px; font-size:14px; width:92px; }
 </style>
 </head>
 <body>
 <header>
   <h1>JERSEY <span>LAB</span></h1>
   <div class="sub">Desain jersey roadbike & gravel — klik panel untuk mewarnai, seret teks/logo untuk memindah.</div>
+  <div class="row">
+    <span class="lbl">Mode</span>
+    <span class="chip mode on" data-mode="desain">Desain</span>
+    <span class="chip mode" data-mode="pola">Pola — Ukuran Asli</span>
+  </div>
   <div class="row">
     <span class="lbl">Potongan</span>
     <span class="chip fit on" data-fit="race">Race Fit (RB)</span>
@@ -84,6 +98,35 @@
     <g id="elemsF"></g>
     <g id="elemsB"></g>
   </svg>
+</div>
+
+<div id="patternWrap" class="hidden">
+  <div class="row">
+    <span class="lbl">Model</span>
+    <span class="chip pmod on" data-pmod="oneck">O-Neck</span>
+    <span class="chip pmod" data-pmod="race">Race Roadbike</span>
+    <span class="chip pmod" data-pmod="relaxed">Relaxed Gravel</span>
+  </div>
+  <div class="row">
+    <span class="lbl">Ukuran</span>
+    <span class="chip psize" data-psize="S">S</span>
+    <span class="chip psize on" data-psize="M">M</span>
+    <span class="chip psize" data-psize="L">L</span>
+    <span class="chip psize" data-psize="XL">XL</span>
+    <span class="chip psize" data-psize="XXL">XXL</span>
+  </div>
+  <div class="row">
+    <span class="lbl">Custom (cm)</span>
+    <input type="number" id="pLD" placeholder="Lingkar dada" min="70" max="160">
+    <input type="number" id="pPB" placeholder="Panjang baju" min="50" max="95">
+    <span class="chip ptog on" id="pAllowTog">Kampuh 1 cm</span>
+  </div>
+  <div class="row">
+    <button id="btnExportPola" class="primary">Export Pola SVG (skala 1:1)</button>
+  </div>
+  <svg id="patternStage" xmlns="http://www.w3.org/2000/svg"></svg>
+  <div class="hint">Satuan cm. Garis oranye putus-putus = tanda bantu (lipatan / posisi kantong / garis resleting). Garis abu putus-putus = kampuh 1 cm.
+  Export SVG berskala asli (mm) — bawa ke percetakan untuk dicetak ukuran penuh, atau potong per A4 dengan skala 100%. Cek kotak kalibrasi 10×10 cm setelah mencetak.</div>
 </div>
 
 <div id="insp">
@@ -565,6 +608,179 @@ document.getElementById("btnReset").addEventListener("click", function() {
   document.querySelectorAll(".chip.slv").forEach(function(c) { c.classList.toggle("on", c.getAttribute("data-slv") === "short"); });
   document.getElementById("customColor").value = state.colors.bodyF;
   showPanelInsp(); renderAll(); toast("Desain direset");
+});
+/* ============ MODE POLA ============ */
+var PSIZES = { S:{LD:96,PB:68}, M:{LD:100,PB:70}, L:{LD:104,PB:72}, XL:{LD:108,PB:74}, XXL:{LD:114,PB:76} };
+var pstate = { model: "oneck", size: "M", LD: "", PB: "", allow: true };
+var SC = 6;
+function cm(v) { return Math.round(v * SC * 10) / 10; }
+function pMeas() {
+  var base = PSIZES[pstate.size];
+  var LD = parseFloat(pstate.LD) || base.LD;
+  var PB = parseFloat(pstate.PB) || base.PB;
+  var ease = pstate.model === "race" ? -4 : (pstate.model === "relaxed" ? 10 : 8);
+  return { LD: LD, PB: PB, LB: Math.round(LD * 0.44), G: LD + ease };
+}
+function allowAttrs(w, h, cx, cy) {
+  var sx = (w + 2) / w, sy = (h + 2) / h;
+  return "translate(" + cm(cx) + " " + cm(cy) + ") scale(" + sx.toFixed(4) + " " + sy.toFixed(4) + ") translate(" + (-cm(cx)) + " " + (-cm(cy)) + ")";
+}
+function bodyPiece(m, isBack) {
+  var model = pstate.model;
+  var ndF = model === "oneck" ? 9.5 : (model === "race" ? 3.2 : 4.5), ndB = 2.2;
+  var nd = isBack ? ndB : ndF;
+  var PBp = isBack ? (model === "race" ? m.PB + 3.5 : (model === "relaxed" ? m.PB + 1 : m.PB))
+                   : (model === "race" ? m.PB - 3 : m.PB);
+  var G = m.G, wc = G / 4, W2 = G / 2, cxL = W2 / 2;
+  var nh = G / 20 + 2.2, armY = G / 4 + 2, shX = m.LB / 2, shD = 4.5;
+  var d = "M " + cm(cxL) + " " + cm(nd)
+    + " Q " + cm(cxL + nh) + " " + cm(nd) + ", " + cm(cxL + nh) + " 0"
+    + " L " + cm(cxL + shX) + " " + cm(shD)
+    + " Q " + cm(cxL + shX - 2) + " " + cm(armY * 0.62) + ", " + cm(cxL + wc) + " " + cm(armY)
+    + " Q " + cm(cxL + wc - 1.8) + " " + cm((armY + PBp * 0.55) / 2) + ", " + cm(cxL + wc - 1.2) + " " + cm(PBp * 0.55)
+    + " Q " + cm(cxL + wc + 0.6) + " " + cm(PBp * 0.82) + ", " + cm(cxL + wc + 1) + " " + cm(PBp);
+  if (isBack && model === "race") d += " Q " + cm(cxL) + " " + cm(PBp + 2) + ", " + cm(cxL - wc - 1) + " " + cm(PBp);
+  else d += " L " + cm(cxL - wc - 1) + " " + cm(PBp);
+  d += " Q " + cm(cxL - wc - 0.6) + " " + cm(PBp * 0.82) + ", " + cm(cxL - wc + 1.2) + " " + cm(PBp * 0.55)
+    + " Q " + cm(cxL - wc + 1.8) + " " + cm((armY + PBp * 0.55) / 2) + ", " + cm(cxL - wc) + " " + cm(armY)
+    + " Q " + cm(cxL - shX + 2) + " " + cm(armY * 0.62) + ", " + cm(cxL - shX) + " " + cm(shD)
+    + " L " + cm(cxL - nh) + " 0"
+    + " Q " + cm(cxL - nh) + " " + cm(nd) + ", " + cm(cxL) + " " + cm(nd) + " Z";
+  var marks = [];
+  marks.push("M " + cm(cxL) + " " + cm(nd) + " L " + cm(cxL) + " " + cm(PBp));
+  if (isBack && model !== "oneck") {
+    var pw = G / 2 * 0.84, px = cxL - pw / 2, py = PBp - 19.5;
+    marks.push("M " + cm(px) + " " + cm(py) + " L " + cm(px + pw) + " " + cm(py) + " L " + cm(px + pw) + " " + cm(py + 17.5) + " L " + cm(px) + " " + cm(py + 17.5) + " Z");
+  }
+  if (model === "race") marks.push("M " + cm(cxL - wc - 0.5) + " " + cm(PBp - 4) + " L " + cm(cxL + wc + 0.5) + " " + cm(PBp - 4));
+  var title = isBack ? "BADAN BELAKANG" : "BADAN DEPAN";
+  var note = !isBack
+    ? (model === "oneck" ? "Potong 1x — tengah depan = garis lipat kain" : "Potong 2x (kiri/kanan) — tengah = garis resleting")
+    : (model === "oneck" ? "Potong 1x — tengah belakang = garis lipat kain" : "Potong 1x — garis lipat; kotak oranye = posisi kantong");
+  return { title: title, note: note, w: W2, h: PBp, d: d, marks: marks, acx: cxL, acy: PBp / 2 };
+}
+function sleevePiece(m) {
+  var G = m.G, Wb = G / 2 - 8, capH = G / 10 + 3.5;
+  var long = state.sleeve === "long";
+  var SL = long ? 59 : 23 + (m.LD - 96) * 0.12;
+  var cuffW = long ? 21 : Wb - 7, inset = (Wb - cuffW) / 2, H = capH + SL;
+  var d = "M 0 " + cm(capH)
+    + " Q " + cm(Wb * 0.20) + " " + cm(capH * 0.05) + ", " + cm(Wb / 2) + " 0"
+    + " Q " + cm(Wb * 0.80) + " " + cm(capH * 0.05) + ", " + cm(Wb) + " " + cm(capH)
+    + " L " + cm(Wb - inset) + " " + cm(H)
+    + " L " + cm(inset) + " " + cm(H) + " Z";
+  var marks = [
+    "M " + cm(Wb / 2) + " " + cm(1) + " L " + cm(Wb / 2) + " " + cm(H - 1),
+    "M " + cm(inset + 0.6) + " " + cm(H - 4) + " L " + cm(Wb - inset - 0.6) + " " + cm(H - 4)
+  ];
+  return { title: "LENGAN " + (long ? "PANJANG" : "PENDEK"), note: "Potong 2x — garis oranye tengah = arah serat; garis bawah = manset/kelim", w: Wb, h: H, d: d, marks: marks, acx: Wb / 2, acy: H / 2 };
+}
+function collarPiece(m) {
+  var model = pstate.model;
+  var ndF = model === "oneck" ? 9.5 : (model === "race" ? 3.2 : 4.5);
+  var nh = m.G / 20 + 2.2;
+  var nc = 2 * nh * 1.9 + ndF + 2.2;
+  var w = model === "oneck" ? nc * 0.85 : nc, h = model === "oneck" ? 5 : 4.2;
+  var d = "M 0 0 L " + cm(w) + " 0 L " + cm(w) + " " + cm(h) + " L 0 " + cm(h) + " Z";
+  var marks = model === "oneck" ? ["M 0 " + cm(h / 2) + " L " + cm(w) + " " + cm(h / 2)] : [];
+  return { title: model === "oneck" ? "RIB LEHER (O-NECK)" : "KERAH TEGAK",
+    note: model === "oneck" ? "Potong 1x — lipat dua mengikuti garis oranye" : "Potong 2x + 1x lapisan (fliselin)",
+    w: w, h: h, d: d, marks: marks, acx: w / 2, acy: h / 2 };
+}
+function pocketPiece(m) {
+  var w = (m.G / 2 * 0.84) / 3 - 1, h = 17;
+  var d = "M 0 0 L " + cm(w) + " 0 L " + cm(w) + " " + cm(h - 2.5)
+    + " Q " + cm(w) + " " + cm(h) + ", " + cm(w - 2.5) + " " + cm(h)
+    + " L " + cm(2.5) + " " + cm(h) + " Q 0 " + cm(h) + ", 0 " + cm(h - 2.5) + " Z";
+  return { title: "KANTONG BELAKANG", note: "Potong 3x — garis oranye = jalur elastik atas", w: w, h: h, d: d,
+    marks: ["M 0 " + cm(2) + " L " + cm(w) + " " + cm(2)], acx: w / 2, acy: h / 2 };
+}
+function chestPocketPiece() {
+  var w = 13, h = 14;
+  return { title: "KANTONG DADA", note: "Potong 1x — untuk model Relaxed", w: w, h: h,
+    d: "M 0 0 L " + cm(w) + " 0 L " + cm(w) + " " + cm(h) + " L 0 " + cm(h) + " Z", marks: [], acx: w / 2, acy: h / 2 };
+}
+var lastPola = { wCm: 100, hCm: 100 };
+function renderPattern() {
+  var m = pMeas(), model = pstate.model;
+  var pieces = [bodyPiece(m, false), bodyPiece(m, true), sleevePiece(m), collarPiece(m)];
+  if (model !== "oneck") pieces.push(pocketPiece(m));
+  if (model === "relaxed") pieces.push(chestPocketPiece());
+  var maxRowW = 178, gap = 7, labelH = 9.5, headH = 12;
+  var x = 4, y = headH, rowH = 0, totalW = 0;
+  var body = "";
+  pieces.forEach(function(pc) {
+    if (x + pc.w > maxRowW && x > 4) { x = 4; y += rowH + labelH + gap; rowH = 0; }
+    body += '<g transform="translate(' + cm(x) + " " + cm(y) + ')">';
+    if (pstate.allow) body += '<path class="pallow" transform="' + allowAttrs(pc.w, pc.h, pc.acx, pc.acy) + '" d="' + pc.d + '"/>';
+    body += '<path class="pcut" d="' + pc.d + '"/>';
+    pc.marks.forEach(function(mk) { body += '<path class="pmark" d="' + mk + '"/>'; });
+    body += '<text class="ptitle" x="0" y="' + cm(pc.h + 3.6) + '" font-size="12.5">' + pc.title + "</text>";
+    body += '<text class="ptxt" x="0" y="' + cm(pc.h + 6.8) + '" font-size="9.5">' + pc.note + "</text>";
+    body += "</g>";
+    x += pc.w + gap; if (pc.h > rowH) rowH = pc.h;
+    if (x - gap + 4 > totalW) totalW = x - gap + 4;
+  });
+  var totalH = y + rowH + labelH + 3;
+  lastPola = { wCm: totalW, hCm: totalH };
+  var modelName = model === "oneck" ? "O-NECK" : (model === "race" ? "RACE ROADBIKE" : "RELAXED GRAVEL");
+  var custom = (pstate.LD || pstate.PB) ? " (custom)" : "";
+  var head = '<rect class="pbg" x="0" y="0" width="' + cm(totalW) + '" height="' + cm(totalH) + '" fill="#171e24"/>';
+  head += '<text class="ptitle" x="' + cm(4) + '" y="' + cm(4.6) + '" font-size="15">POLA JERSEY — ' + modelName + " • Ukuran " + pstate.size + custom + "</text>";
+  head += '<text class="ptxt" x="' + cm(4) + '" y="' + cm(8.2) + '" font-size="10.5">Lingkar dada ' + m.LD + " cm • Panjang baju " + m.PB + " cm • Lebar bahu " + m.LB + " cm • Lengan " + (state.sleeve === "long" ? "panjang" : "pendek") + " • satuan cm</text>";
+  head += '<rect class="pmark" x="' + cm(totalW - 15) + '" y="' + cm(1) + '" width="' + cm(10) + '" height="' + cm(10) + '"/>';
+  head += '<text class="ptxt" x="' + cm(totalW - 15) + '" y="' + cm(13.4) + '" font-size="9">kalibrasi 10 cm</text>';
+  var st = document.getElementById("patternStage");
+  st.setAttribute("viewBox", "0 0 " + cm(totalW) + " " + cm(totalH));
+  st.innerHTML = head + body;
+}
+function setMode(md) {
+  document.querySelectorAll(".chip.mode").forEach(function(c) { c.classList.toggle("on", c.getAttribute("data-mode") === md); });
+  var pola = md === "pola";
+  document.getElementById("patternWrap").classList.toggle("hidden", !pola);
+  document.getElementById("stageWrap").classList.toggle("hidden", pola);
+  document.getElementById("insp").classList.toggle("hidden", pola);
+  if (pola) renderPattern();
+}
+document.querySelectorAll(".chip.mode").forEach(function(ch) {
+  ch.addEventListener("click", function() { setMode(ch.getAttribute("data-mode")); });
+});
+document.querySelectorAll(".chip.pmod").forEach(function(ch) {
+  ch.addEventListener("click", function() {
+    document.querySelectorAll(".chip.pmod").forEach(function(c) { c.classList.remove("on"); });
+    ch.classList.add("on"); pstate.model = ch.getAttribute("data-pmod"); renderPattern();
+  });
+});
+document.querySelectorAll(".chip.psize").forEach(function(ch) {
+  ch.addEventListener("click", function() {
+    document.querySelectorAll(".chip.psize").forEach(function(c) { c.classList.remove("on"); });
+    ch.classList.add("on"); pstate.size = ch.getAttribute("data-psize"); renderPattern();
+  });
+});
+document.getElementById("pLD").addEventListener("input", function(ev) { pstate.LD = ev.target.value; renderPattern(); });
+document.getElementById("pPB").addEventListener("input", function(ev) { pstate.PB = ev.target.value; renderPattern(); });
+document.getElementById("pAllowTog").addEventListener("click", function() {
+  pstate.allow = !pstate.allow;
+  document.getElementById("pAllowTog").classList.toggle("on", pstate.allow);
+  renderPattern();
+});
+document.getElementById("btnExportPola").addEventListener("click", function() {
+  var st = document.getElementById("patternStage");
+  var clone = st.cloneNode(true);
+  clone.setAttribute("xmlns", NS);
+  clone.setAttribute("width", Math.round(lastPola.wCm * 10) + "mm");
+  clone.setAttribute("height", Math.round(lastPola.hCm * 10) + "mm");
+  var bg = clone.querySelector(".pbg"); if (bg) bg.setAttribute("fill", "#ffffff");
+  clone.querySelectorAll(".pcut").forEach(function(p) { p.setAttribute("fill", "#ffffff"); p.setAttribute("stroke", "#111111"); });
+  clone.querySelectorAll(".pmark").forEach(function(p) { p.setAttribute("stroke", "#111111"); });
+  clone.querySelectorAll(".pallow").forEach(function(p) { p.setAttribute("stroke", "#888888"); });
+  clone.querySelectorAll("text").forEach(function(t) { t.setAttribute("fill", "#111111"); });
+  var str = new XMLSerializer().serializeToString(clone);
+  var a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([str], { type: "image/svg+xml;charset=utf-8" }));
+  a.download = "pola-jersey-" + pstate.model + "-" + pstate.size + ".svg";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  toast("Pola SVG skala 1:1 tersimpan");
 });
 /* ============ INIT ============ */
 document.getElementById("customColor").value = state.colors.bodyF;
