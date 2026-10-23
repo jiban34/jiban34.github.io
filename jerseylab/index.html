@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Jersey Lab — Roadbike & Gravel</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { margin:0; font-family: 'Segoe UI', system-ui, sans-serif; background:#101418; color:#e8ecef; }
+  header { padding:12px 14px 8px; }
+  h1 { font-size:19px; margin:0 0 2px; letter-spacing:.4px; }
+  h1 span { color:#ff7847; }
+  .sub { font-size:12px; color:#9fb0bd; margin-bottom:10px; }
+  .row { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-bottom:8px; }
+  .lbl { font-size:11px; color:#8fa3b3; text-transform:uppercase; letter-spacing:.8px; margin-right:2px; }
+  button, .chip {
+    background:#1d262e; color:#e8ecef; border:1px solid #33424f; border-radius:20px;
+    padding:7px 13px; font-size:13px; cursor:pointer; user-select:none;
+  }
+  button:active, .chip:active { transform:scale(.96); }
+  .chip.on { background:#ff7847; border-color:#ff7847; color:#14100d; font-weight:700; }
+  button.primary { background:#ff7847; border-color:#ff7847; color:#14100d; font-weight:700; }
+  button.warn { border-color:#7a4a3a; color:#ffb59d; }
+  #stageWrap { background:#171e24; border-top:1px solid #26313b; border-bottom:1px solid #26313b; }
+  svg { display:block; width:100%; height:auto; touch-action:none; }
+  svg path.panel { cursor:pointer; }
+  svg .selOutline { stroke:#ffcf3f !important; stroke-width:3 !important; stroke-dasharray:7 4; }
+  svg text.el, svg image.el { cursor:move; }
+  svg .elSel { outline:none; }
+  #insp { padding:12px 14px 30px; }
+  #insp h2 { font-size:14px; margin:0 0 8px; color:#ffd9c7; }
+  .swatches { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+  .sw { width:30px; height:30px; border-radius:50%; border:2px solid #3a4753; cursor:pointer; padding:0; }
+  .sw:active { transform:scale(.9); }
+  input[type=color] { width:44px; height:32px; border:none; background:none; cursor:pointer; padding:0; }
+  input[type=text] { background:#0c1013; border:1px solid #33424f; color:#fff; border-radius:8px; padding:8px 10px; font-size:14px; width:170px; }
+  input[type=range] { width:150px; accent-color:#ff7847; }
+  .panelChips { display:flex; flex-wrap:wrap; gap:5px; }
+  .pchip { font-size:11.5px; padding:5px 10px; }
+  .pchip.on { background:#2f6db3; border-color:#2f6db3; color:#fff; font-weight:700; }
+  .hint { font-size:11.5px; color:#7e93a5; margin-top:10px; line-height:1.5; }
+  .samples { display:flex; gap:6px; flex-wrap:wrap; }
+  .sample { font-size:12px; padding:6px 11px; }
+  .hidden { display:none !important; }
+  #toast { position:fixed; left:50%; bottom:22px; transform:translateX(-50%); background:#232f38; border:1px solid #41525f;
+           color:#fff; padding:9px 16px; border-radius:20px; font-size:13px; opacity:0; pointer-events:none; transition:opacity .25s; z-index:9; }
+</style>
+</head>
+<body>
+<header>
+  <h1>JERSEY <span>LAB</span></h1>
+  <div class="sub">Desain jersey roadbike & gravel — klik panel untuk mewarnai, seret teks/logo untuk memindah.</div>
+  <div class="row">
+    <span class="lbl">Potongan</span>
+    <span class="chip fit on" data-fit="race">Race Fit (RB)</span>
+    <span class="chip fit" data-fit="relaxed">Relaxed (Gravel/Ultra)</span>
+  </div>
+  <div class="row">
+    <span class="lbl">Lengan</span>
+    <span class="chip slv on" data-slv="short">Pendek</span>
+    <span class="chip slv" data-slv="long">Panjang</span>
+  </div>
+  <div class="row">
+    <span class="lbl">Contoh</span>
+    <span class="samples" id="samples"></span>
+  </div>
+  <div class="row">
+    <button id="btnText">+ Teks</button>
+    <button id="btnLogo">+ Logo / Gambar</button>
+    <input type="file" id="fileLogo" accept="image/*" class="hidden">
+    <button id="btnExport" class="primary">Export PNG</button>
+    <button id="btnReset" class="warn">Reset</button>
+  </div>
+</header>
+
+<div id="stageWrap">
+  <svg id="stage" viewBox="0 0 1400 520" xmlns="http://www.w3.org/2000/svg">
+    <defs id="defs"></defs>
+    <rect id="bgRect" x="0" y="0" width="1400" height="520" fill="#171e24"/>
+    <text x="330" y="34" text-anchor="middle" font-size="17" fill="#5f7484" font-weight="700" letter-spacing="3">DEPAN</text>
+    <text x="1050" y="34" text-anchor="middle" font-size="17" fill="#5f7484" font-weight="700" letter-spacing="3">BELAKANG</text>
+    <g id="frontG"></g>
+    <g id="backG"></g>
+    <g id="elemsF"></g>
+    <g id="elemsB"></g>
+  </svg>
+</div>
+
+<div id="insp">
+  <div id="inspPanel">
+    <h2 id="panelName">Panel: Badan Depan</h2>
+    <div class="swatches" id="swatches"></div>
+    <div class="row">
+      <span class="lbl">Warna bebas</span>
+      <input type="color" id="customColor" value="#1b3a5c">
+      <button id="btnPattern">Isi Pattern / Foto</button>
+      <input type="file" id="filePattern" accept="image/*" class="hidden">
+      <button id="btnClearPattern" class="warn hidden">Hapus Pattern</button>
+    </div>
+    <div class="panelChips" id="panelChips"></div>
+    <div class="hint">Klik panel langsung di gambar, atau pilih dari daftar di atas. Pattern/foto akan mengisi panel yang sedang dipilih.</div>
+  </div>
+  <div id="inspElem" class="hidden">
+    <h2 id="elemName">Elemen</h2>
+    <div class="row" id="elemTextRow">
+      <span class="lbl">Teks</span>
+      <input type="text" id="elemText" value="">
+    </div>
+    <div class="row">
+      <span class="lbl">Ukuran</span>
+      <input type="range" id="elemSize" min="10" max="110" value="34">
+      <span class="lbl" id="elemColorLbl">Warna</span>
+      <input type="color" id="elemColor" value="#ffffff">
+    </div>
+    <div class="row">
+      <button id="btnFlipView">Pindah ke Belakang</button>
+      <button id="btnDelElem" class="warn">Hapus Elemen</button>
+      <button id="btnBackPanel">← Kembali ke Panel</button>
+    </div>
+    <div class="hint">Seret elemen di gambar untuk memindah posisi.</div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+"use strict";
+/* ============ STATE ============ */
+var PANELS = [
+  ["bodyF","Badan Depan"],["bodyB","Badan Belakang"],["side","Panel Samping"],
+  ["sleeves","Lengan"],["cuff","Manset"],["collar","Kerah"],["zipper","Resleting"],
+  ["pockets","Kantong"],["trim","Lis Kantong"],["hem","Ban Bawah"]
+];
+var PALETTE = ["#ffffff","#f2f2f2","#c0c6cc","#5b6670","#14181c","#0d2a52","#1b3a5c","#2f6db3","#7fb2e0",
+  "#c8102e","#e2543e","#ff7847","#f9a825","#f7e463","#1e7d4f","#43a047","#9ccc65","#6d4c2f","#8e24aa","#ec407a"];
+var DEFAULT_COLORS = { bodyF:"#1b3a5c", bodyB:"#1b3a5c", side:"#dce3e8", sleeves:"#f5f6f7", cuff:"#c8102e",
+  collar:"#c8102e", zipper:"#c8102e", pockets:"#14304d", trim:"#c8102e", hem:"#10151a" };
+var state = {
+  fit: "race", sleeve: "short",
+  colors: JSON.parse(JSON.stringify(DEFAULT_COLORS)),
+  patterns: {},           // panelKey -> dataURL
+  selPanel: "bodyF",
+  elems: [],              // {id,view,type,text,color,size,x,y,src}
+  selElem: null,
+  nextId: 1
+};
+var SAMPLES = [
+  { name:"Navy Merah", c:{ bodyF:"#1b3a5c", bodyB:"#1b3a5c", side:"#dce3e8", sleeves:"#f5f6f7", cuff:"#c8102e", collar:"#c8102e", zipper:"#c8102e", pockets:"#14304d", trim:"#c8102e", hem:"#10151a" } },
+  { name:"Stealth Hitam", c:{ bodyF:"#17191c", bodyB:"#17191c", side:"#23262a", sleeves:"#1d2023", cuff:"#3a3f45", collar:"#0c0d0f", zipper:"#3a3f45", pockets:"#101214", trim:"#3a3f45", hem:"#0c0d0f" } },
+  { name:"Putih Biru", c:{ bodyF:"#f4f6f8", bodyB:"#f4f6f8", side:"#2f6db3", sleeves:"#ffffff", cuff:"#2f6db3", collar:"#2f6db3", zipper:"#2f6db3", pockets:"#e4e9ed", trim:"#2f6db3", hem:"#2f6db3" } },
+  { name:"Hi-Viz", c:{ bodyF:"#e8e13c", bodyB:"#e8e13c", side:"#20242a", sleeves:"#f2ef5a", cuff:"#20242a", collar:"#20242a", zipper:"#20242a", pockets:"#dcd62f", trim:"#20242a", hem:"#20242a" } },
+  { name:"Hijau Army", c:{ bodyF:"#4a5d43", bodyB:"#4a5d43", side:"#2e3a2a", sleeves:"#5c7050", cuff:"#2e3a2a", collar:"#2e3a2a", zipper:"#c8b98a", pockets:"#3c4c36", trim:"#c8b98a", hem:"#232b20" } }
+];
+/* ============ GEOMETRI ============ */
+function P(fit) {
+  if (fit === "relaxed") return { W:170, Ww:160, Wh:166, frontBot:412, backBot:440, neck:46 };
+  return { W:152, Ww:128, Wh:140, frontBot:404, backBot:438, neck:44 };
+}
+function bodyPath(cx, p, bot, isBack) {
+  var n = p.neck, W = p.W, Ww = p.Ww, Wh = p.Wh;
+  var neckDip = isBack ? 66 : 62;
+  return "M " + (cx-n) + " 70"
+    + " L " + (cx-W+6) + " 90"
+    + " Q " + (cx-W-4) + " 132, " + (cx-W) + " 184"
+    + " Q " + (cx-Ww-14) + " 242, " + (cx-Ww) + " 294"
+    + " Q " + (cx-Wh+8) + " 344, " + (cx-Wh) + " " + (bot-16)
+    + " L " + (cx-Wh) + " " + bot
+    + " L " + (cx+Wh) + " " + bot
+    + " L " + (cx+Wh) + " " + (bot-16)
+    + " Q " + (cx+Wh-8) + " 344, " + (cx+Ww) + " 294"
+    + " Q " + (cx+Ww+14) + " 242, " + (cx+W) + " 184"
+    + " Q " + (cx+W+4) + " 132, " + (cx+W-6) + " 90"
+    + " L " + (cx+n) + " 70"
+    + " Q " + cx + " " + neckDip + ", " + (cx-n) + " 70 Z";
+}
+function sidePath(cx, p, bot, right) {
+  var s = right ? 1 : -1, W = p.W, Ww = p.Ww, Wh = p.Wh, w = 26;
+  return "M " + (cx + s*W) + " 190"
+    + " Q " + (cx + s*(Ww+12)) + " 244, " + (cx + s*Ww) + " 294"
+    + " Q " + (cx + s*(Wh-6)) + " 344, " + (cx + s*Wh) + " " + (bot-16)
+    + " L " + (cx + s*(Wh-w)) + " " + (bot-16)
+    + " Q " + (cx + s*(Ww-w+4)) + " 342, " + (cx + s*(Ww-w)) + " 292"
+    + " Q " + (cx + s*(W-w-8)) + " 244, " + (cx + s*(W-w)) + " 192 Z";
+}
+function sleevePaths(cx, p, bot, right, long) {
+  var s = right ? 1 : -1;
+  var STx = cx + s*(p.W-4), STy = 96, APx = cx + s*p.W, APy = 188;
+  var dx = long ? 0.66 : 0.82, dy = long ? 0.75 : 0.57, L = long ? 246 : 98, cw = long ? 24 : 18;
+  function pt(x, y, t) { return [x + s*dx*L*t, y + dy*L*t]; }
+  var E1 = pt(STx, STy, 1), E2 = pt(APx, APy, 1);
+  var C1 = pt(STx, STy, (L-cw)/L), C2 = pt(APx, APy, (L-cw)/L);
+  var main = "M " + STx + " " + STy
+    + " Q " + ((STx+E1[0])/2 + s*6) + " " + ((STy+E1[1])/2 - 8) + ", " + E1[0] + " " + E1[1]
+    + " L " + E2[0] + " " + E2[1]
+    + " Q " + ((APx+E2[0])/2 + s*4) + " " + ((APy+E2[1])/2 + 6) + ", " + APx + " " + APy
+    + " Q " + (cx + s*(p.W+8)) + " 140, " + STx + " " + STy + " Z";
+  var cuff = "M " + C1[0] + " " + C1[1] + " L " + E1[0] + " " + E1[1] + " L " + E2[0] + " " + E2[1] + " L " + C2[0] + " " + C2[1] + " Z";
+  return { main: main, cuff: cuff };
+}
+function collarPath(cx, p, isBack) {
+  var n = p.neck;
+  var dip = isBack ? 64 : 60, y2 = isBack ? 84 : 88;
+  return "M " + (cx-n-9) + " 68 Q " + cx + " " + dip + ", " + (cx+n+9) + " 68"
+    + " L " + (cx+n+3) + " " + y2 + " Q " + cx + " " + (dip+16) + ", " + (cx-n-3) + " " + y2 + " Z";
+}
+function hemPath(cx, p, bot) {
+  return "M " + (cx-p.Wh) + " " + (bot-16) + " L " + (cx+p.Wh) + " " + (bot-16)
+    + " L " + (cx+p.Wh) + " " + bot + " L " + (cx-p.Wh) + " " + bot + " Z";
+}
+function pocketPaths(cx, p) {
+  var total = p.Wh * 2 * 0.84, x0 = cx - total/2, w = (total - 12) / 3;
+  var top = p.backBot - 142, bot = p.backBot - 18, out = [];
+  for (var i = 0; i < 3; i++) {
+    var x = x0 + i * (w + 6);
+    out.push("M " + x + " " + top + " L " + (x+w) + " " + top + " L " + (x+w) + " " + (bot-10)
+      + " Q " + (x+w) + " " + bot + ", " + (x+w-10) + " " + bot
+      + " L " + (x+10) + " " + bot + " Q " + x + " " + bot + ", " + x + " " + (bot-10) + " Z");
+  }
+  return out;
+}
+function trimPath(cx, p) {
+  var total = p.Wh * 2 * 0.84 + 10, top = p.backBot - 142;
+  return "M " + (cx - total/2) + " " + top + " L " + (cx + total/2) + " " + top
+    + " L " + (cx + total/2) + " " + (top+15) + " L " + (cx - total/2) + " " + (top+15) + " Z";
+}
+/* ============ RENDER ============ */
+var svg = document.getElementById("stage");
+var NS = "http://www.w3.org/2000/svg";
+function fillFor(key) { return state.patterns[key] ? "url(#pat-" + key + ")" : state.colors[key]; }
+function mkPath(d, panel) {
+  var el = document.createElementNS(NS, "path");
+  el.setAttribute("d", d);
+  el.setAttribute("class", "panel");
+  el.setAttribute("data-panel", panel);
+  el.setAttribute("fill", fillFor(panel));
+  el.setAttribute("stroke", "#0b0e11");
+  el.setAttribute("stroke-width", "1.5");
+  el.setAttribute("stroke-linejoin", "round");
+  return el;
+}
+function buildView(g, cx, isBack) {
+  while (g.firstChild) g.removeChild(g.firstChild);
+  var p = P(state.fit), bot = isBack ? p.backBot : p.frontBot, long = state.sleeve === "long";
+  [false, true].forEach(function(right) {
+    var sp = sleevePaths(cx, p, bot, right, long);
+    g.appendChild(mkPath(sp.main, "sleeves"));
+    g.appendChild(mkPath(sp.cuff, "cuff"));
+  });
+  g.appendChild(mkPath(bodyPath(cx, p, bot, isBack), isBack ? "bodyB" : "bodyF"));
+  [false, true].forEach(function(right) { g.appendChild(mkPath(sidePath(cx, p, bot, right), "side")); });
+  g.appendChild(mkPath(hemPath(cx, p, bot), "hem"));
+  if (isBack) {
+    pocketPaths(cx, p).forEach(function(d) { g.appendChild(mkPath(d, "pockets")); });
+    g.appendChild(mkPath(trimPath(cx, p), "trim"));
+    g.appendChild(mkPath(collarPath(cx, p, true), "collar"));
+  } else {
+    var zip = document.createElementNS(NS, "rect");
+    zip.setAttribute("x", cx - 3.5); zip.setAttribute("y", 84);
+    zip.setAttribute("width", 7); zip.setAttribute("height", bot - 84);
+    zip.setAttribute("class", "panel"); zip.setAttribute("data-panel", "zipper");
+    zip.setAttribute("fill", fillFor("zipper"));
+    g.appendChild(zip);
+    var pull = document.createElementNS(NS, "rect");
+    pull.setAttribute("x", cx - 5); pull.setAttribute("y", 86);
+    pull.setAttribute("width", 10); pull.setAttribute("height", 15); pull.setAttribute("rx", 3);
+    pull.setAttribute("class", "panel"); pull.setAttribute("data-panel", "zipper");
+    pull.setAttribute("fill", fillFor("zipper")); pull.setAttribute("stroke", "#0b0e11");
+    g.appendChild(pull);
+    g.appendChild(mkPath(collarPath(cx, p, false), "collar"));
+    if (state.fit === "relaxed") {
+      var cp = document.createElementNS(NS, "path");
+      var x0 = cx - p.W + 40, y0 = 148;
+      cp.setAttribute("d", "M " + x0 + " " + y0 + " L " + (x0+58) + " " + y0 + " L " + (x0+58) + " " + (y0+62)
+        + " L " + x0 + " " + (y0+62) + " Z");
+      cp.setAttribute("class", "panel"); cp.setAttribute("data-panel", "pockets");
+      cp.setAttribute("fill", fillFor("pockets")); cp.setAttribute("stroke", "#0b0e11"); cp.setAttribute("stroke-width", "1.5");
+      g.appendChild(cp);
+      var fl = document.createElementNS(NS, "path");
+      fl.setAttribute("d", "M " + x0 + " " + y0 + " L " + (x0+58) + " " + y0 + " L " + (x0+58) + " " + (y0+13) + " L " + x0 + " " + (y0+13) + " Z");
+      fl.setAttribute("class", "panel"); fl.setAttribute("data-panel", "trim");
+      fl.setAttribute("fill", fillFor("trim")); fl.setAttribute("stroke", "#0b0e11"); fl.setAttribute("stroke-width", "1.5");
+      g.appendChild(fl);
+    }
+  }
+}
+function buildDefs() {
+  var defs = document.getElementById("defs");
+  while (defs.firstChild) defs.removeChild(defs.firstChild);
+  Object.keys(state.patterns).forEach(function(key) {
+    var pat = document.createElementNS(NS, "pattern");
+    pat.setAttribute("id", "pat-" + key);
+    pat.setAttribute("patternUnits", "userSpaceOnUse");
+    pat.setAttribute("width", "260"); pat.setAttribute("height", "260");
+    var img = document.createElementNS(NS, "image");
+    img.setAttribute("href", state.patterns[key]);
+    img.setAttribute("width", "260"); img.setAttribute("height", "260");
+    img.setAttribute("preserveAspectRatio", "xMidYMid slice");
+    pat.appendChild(img);
+    defs.appendChild(pat);
+  });
+}
+function renderElems() {
+  ["F", "B"].forEach(function(v) {
+    var g = document.getElementById("elems" + v);
+    while (g.firstChild) g.removeChild(g.firstChild);
+    state.elems.filter(function(e) { return e.view === v; }).forEach(function(e) {
+      var el;
+      if (e.type === "text") {
+        el = document.createElementNS(NS, "text");
+        el.setAttribute("x", e.x); el.setAttribute("y", e.y);
+        el.setAttribute("font-size", e.size); el.setAttribute("fill", e.color);
+        el.setAttribute("font-weight", "800"); el.setAttribute("text-anchor", "middle");
+        el.setAttribute("font-family", "Arial, Helvetica, sans-serif");
+        el.textContent = e.text;
+      } else {
+        el = document.createElementNS(NS, "image");
+        el.setAttribute("href", e.src);
+        el.setAttribute("x", e.x); el.setAttribute("y", e.y);
+        el.setAttribute("width", e.w); el.setAttribute("height", e.h);
+      }
+      el.setAttribute("class", "el"); el.setAttribute("data-eid", e.id);
+      if (state.selElem === e.id) {
+        el.setAttribute("opacity", "0.92");
+        el.setAttribute("style", "filter: drop-shadow(0 0 3px #ffcf3f) drop-shadow(0 0 3px #ffcf3f);");
+      }
+      g.appendChild(el);
+    });
+  });
+}
+function renderAll() {
+  buildDefs();
+  buildView(document.getElementById("frontG"), 330, false);
+  buildView(document.getElementById("backG"), 1050, true);
+  renderElems();
+  markSelection();
+}
+function markSelection() {
+  svg.querySelectorAll("path.panel, rect.panel").forEach(function(el) {
+    if (!state.selElem && el.getAttribute("data-panel") === state.selPanel) el.classList.add("selOutline");
+    else el.classList.remove("selOutline");
+  });
+  document.querySelectorAll(".pchip").forEach(function(c) {
+    c.classList.toggle("on", c.getAttribute("data-panel") === state.selPanel);
+  });
+  var nm = PANELS.filter(function(x) { return x[0] === state.selPanel; })[0];
+  document.getElementById("panelName").textContent = "Panel: " + (nm ? nm[1] : state.selPanel);
+  document.getElementById("btnClearPattern").classList.toggle("hidden", !state.patterns[state.selPanel]);
+}
+/* ============ INSPECTOR ============ */
+function toast(msg) {
+  var t = document.getElementById("toast");
+  t.textContent = msg; t.style.opacity = "1";
+  setTimeout(function() { t.style.opacity = "0"; }, 1800);
+}
+function showPanelInsp() {
+  document.getElementById("inspPanel").classList.remove("hidden");
+  document.getElementById("inspElem").classList.add("hidden");
+}
+function showElemInsp(e) {
+  document.getElementById("inspPanel").classList.add("hidden");
+  document.getElementById("inspElem").classList.remove("hidden");
+  document.getElementById("elemName").textContent = e.type === "text" ? "Elemen: Teks" : "Elemen: Logo/Gambar";
+  document.getElementById("elemTextRow").classList.toggle("hidden", e.type !== "text");
+  document.getElementById("elemColorLbl").classList.toggle("hidden", e.type !== "text");
+  document.getElementById("elemColor").classList.toggle("hidden", e.type !== "text");
+  document.getElementById("btnFlipView").textContent = e.view === "F" ? "Pindah ke Belakang" : "Pindah ke Depan";
+  if (e.type === "text") {
+    document.getElementById("elemText").value = e.text;
+    document.getElementById("elemSize").value = e.size;
+    document.getElementById("elemColor").value = e.color;
+  } else {
+    document.getElementById("elemSize").value = e.w;
+  }
+}
+function selectPanel(key) {
+  state.selPanel = key; state.selElem = null;
+  showPanelInsp(); renderAll();
+}
+function selectElem(id) {
+  state.selElem = id;
+  var e = state.elems.filter(function(x) { return x.id === id; })[0];
+  if (e) { showElemInsp(e); renderAll(); }
+}
+function setPanelColor(hex) {
+  state.colors[state.selPanel] = hex;
+  delete state.patterns[state.selPanel];
+  document.getElementById("customColor").value = hex;
+  renderAll();
+}
+(function buildInspector() {
+  var sw = document.getElementById("swatches");
+  PALETTE.forEach(function(c) {
+    var b = document.createElement("button");
+    b.className = "sw"; b.style.background = c; b.setAttribute("data-color", c);
+    b.addEventListener("click", function() { setPanelColor(c); });
+    sw.appendChild(b);
+  });
+  var pc = document.getElementById("panelChips");
+  PANELS.forEach(function(pr) {
+    var b = document.createElement("button");
+    b.className = "chip pchip"; b.textContent = pr[1]; b.setAttribute("data-panel", pr[0]);
+    b.addEventListener("click", function() { selectPanel(pr[0]); });
+    pc.appendChild(b);
+  });
+  var sm = document.getElementById("samples");
+  SAMPLES.forEach(function(s) {
+    var b = document.createElement("button");
+    b.className = "chip sample"; b.textContent = s.name;
+    b.addEventListener("click", function() {
+      state.colors = JSON.parse(JSON.stringify(s.c)); state.patterns = {};
+      renderAll(); toast("Contoh desain: " + s.name);
+    });
+    sm.appendChild(b);
+  });
+})();
+document.getElementById("customColor").addEventListener("input", function(ev) { setPanelColor(ev.target.value); });
+document.getElementById("btnPattern").addEventListener("click", function() { document.getElementById("filePattern").click(); });
+document.getElementById("filePattern").addEventListener("change", function(ev) {
+  var f = ev.target.files[0]; if (!f) return;
+  var r = new FileReader();
+  r.onload = function() {
+    state.patterns[state.selPanel] = r.result;
+    renderAll(); toast("Pattern terpasang");
+  };
+  r.readAsDataURL(f);
+  ev.target.value = "";
+});
+document.getElementById("btnClearPattern").addEventListener("click", function() {
+  delete state.patterns[state.selPanel]; renderAll();
+});
+/* ============ VARIAN ============ */
+document.querySelectorAll(".chip.fit").forEach(function(ch) {
+  ch.addEventListener("click", function() {
+    document.querySelectorAll(".chip.fit").forEach(function(c) { c.classList.remove("on"); });
+    ch.classList.add("on"); state.fit = ch.getAttribute("data-fit"); renderAll();
+  });
+});
+document.querySelectorAll(".chip.slv").forEach(function(ch) {
+  ch.addEventListener("click", function() {
+    document.querySelectorAll(".chip.slv").forEach(function(c) { c.classList.remove("on"); });
+    ch.classList.add("on"); state.sleeve = ch.getAttribute("data-slv"); renderAll();
+  });
+});
+/* ============ ELEMEN (TEKS / LOGO) ============ */
+function findElem(id) { return state.elems.filter(function(x) { return x.id === id; })[0]; }
+document.getElementById("btnText").addEventListener("click", function() {
+  var e = { id: state.nextId++, view: "F", type: "text", text: "NAMA KAMU", color: "#ffffff", size: 34, x: 330, y: 185 };
+  state.elems.push(e); selectElem(e.id); toast("Teks ditambahkan — seret untuk memindah");
+});
+document.getElementById("btnLogo").addEventListener("click", function() { document.getElementById("fileLogo").click(); });
+document.getElementById("fileLogo").addEventListener("change", function(ev) {
+  var f = ev.target.files[0]; if (!f) return;
+  var r = new FileReader();
+  r.onload = function() {
+    var img = new Image();
+    img.onload = function() {
+      var w = 120, h = 120 * img.naturalHeight / img.naturalWidth;
+      var e = { id: state.nextId++, view: "F", type: "img", src: r.result, w: w, h: h, x: 330 - w/2, y: 150 };
+      state.elems.push(e); selectElem(e.id); toast("Logo ditambahkan — seret untuk memindah");
+    };
+    img.src = r.result;
+  };
+  r.readAsDataURL(f);
+  ev.target.value = "";
+});
+document.getElementById("elemText").addEventListener("input", function(ev) {
+  var e = findElem(state.selElem); if (!e) return;
+  e.text = ev.target.value; renderElems();
+});
+document.getElementById("elemSize").addEventListener("input", function(ev) {
+  var e = findElem(state.selElem); if (!e) return;
+  var v = +ev.target.value;
+  if (e.type === "text") e.size = v;
+  else { var r = e.h / e.w; e.w = v; e.h = v * r; }
+  renderElems();
+});
+document.getElementById("elemColor").addEventListener("input", function(ev) {
+  var e = findElem(state.selElem); if (!e) return;
+  e.color = ev.target.value; renderElems();
+});
+document.getElementById("btnFlipView").addEventListener("click", function() {
+  var e = findElem(state.selElem); if (!e) return;
+  if (e.view === "F") { e.view = "B"; e.x += 720; } else { e.view = "F"; e.x -= 720; }
+  showElemInsp(e); renderAll();
+});
+document.getElementById("btnDelElem").addEventListener("click", function() {
+  state.elems = state.elems.filter(function(x) { return x.id !== state.selElem; });
+  state.selElem = null; showPanelInsp(); renderAll();
+});
+document.getElementById("btnBackPanel").addEventListener("click", function() {
+  state.selElem = null; showPanelInsp(); renderAll();
+});
+/* ============ DRAG & PILIH ============ */
+function svgPoint(ev) {
+  if (!svg.createSVGPoint) return { x: 0, y: 0 };
+  var pt = svg.createSVGPoint();
+  pt.x = ev.clientX; pt.y = ev.clientY;
+  var m = svg.getScreenCTM();
+  if (!m) return { x: 0, y: 0 };
+  var p = pt.matrixTransform(m.inverse());
+  return { x: p.x, y: p.y };
+}
+var drag = null;
+svg.addEventListener("pointerdown", function(ev) {
+  var t = ev.target;
+  if (!t.classList) return;
+  if (t.classList.contains("el")) {
+    var id = +t.getAttribute("data-eid");
+    selectElem(id);
+    var e = findElem(id); if (!e) return;
+    var pt = svgPoint(ev);
+    drag = { e: e, dx: pt.x - e.x, dy: pt.y - e.y };
+    if (svg.setPointerCapture) { try { svg.setPointerCapture(ev.pointerId); } catch (err) {} }
+    ev.preventDefault();
+  } else if (t.classList.contains("panel")) {
+    selectPanel(t.getAttribute("data-panel"));
+  }
+});
+svg.addEventListener("pointermove", function(ev) {
+  if (!drag) return;
+  var pt = svgPoint(ev);
+  drag.e.x = Math.round(pt.x - drag.dx);
+  drag.e.y = Math.round(pt.y - drag.dy);
+  renderElems();
+});
+svg.addEventListener("pointerup", function() { drag = null; });
+svg.addEventListener("pointercancel", function() { drag = null; });
+/* ============ EXPORT & RESET ============ */
+document.getElementById("btnExport").addEventListener("click", function() {
+  state.selElem = null; showPanelInsp(); renderAll();
+  var clone = svg.cloneNode(true);
+  clone.setAttribute("width", "2800"); clone.setAttribute("height", "1040");
+  clone.setAttribute("xmlns", NS);
+  var bg = clone.querySelector("#bgRect"); if (bg) bg.setAttribute("fill", "#f2f4f6");
+  clone.querySelectorAll("text").forEach(function(t) {
+    if (!t.classList.contains("el")) t.setAttribute("fill", "#77828c");
+  });
+  var str = new XMLSerializer().serializeToString(clone);
+  var url = URL.createObjectURL(new Blob([str], { type: "image/svg+xml;charset=utf-8" }));
+  var img = new Image();
+  img.onload = function() {
+    var cv = document.createElement("canvas");
+    cv.width = 2800; cv.height = 1040;
+    var ctx = cv.getContext("2d");
+    ctx.fillStyle = "#f2f4f6"; ctx.fillRect(0, 0, 2800, 1040);
+    ctx.drawImage(img, 0, 0, 2800, 1040);
+    URL.revokeObjectURL(url);
+    if (cv.toBlob) {
+      cv.toBlob(function(b) {
+        var a = document.createElement("a");
+        a.href = URL.createObjectURL(b);
+        a.download = "jersey-design.png";
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        toast("PNG tersimpan — siap kirim ke konveksi");
+      });
+    }
+  };
+  img.src = url;
+});
+document.getElementById("btnReset").addEventListener("click", function() {
+  state.colors = JSON.parse(JSON.stringify(DEFAULT_COLORS));
+  state.patterns = {}; state.elems = []; state.selElem = null; state.selPanel = "bodyF";
+  state.fit = "race"; state.sleeve = "short";
+  document.querySelectorAll(".chip.fit").forEach(function(c) { c.classList.toggle("on", c.getAttribute("data-fit") === "race"); });
+  document.querySelectorAll(".chip.slv").forEach(function(c) { c.classList.toggle("on", c.getAttribute("data-slv") === "short"); });
+  document.getElementById("customColor").value = state.colors.bodyF;
+  showPanelInsp(); renderAll(); toast("Desain direset");
+});
+/* ============ INIT ============ */
+document.getElementById("customColor").value = state.colors.bodyF;
+renderAll();
+</script>
+</body>
+</html>
