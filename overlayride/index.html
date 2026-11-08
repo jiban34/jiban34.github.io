@@ -1184,8 +1184,8 @@ STK.push(
          C.beginPath(); C.moveTo(x0+20*s, y0+150*s); C.lineTo(x0+680*s, y0+150*s); C.stroke(); C.restore(); }
        tks(C, x0+w/2, y0+215*s, b1, 34*s, fam, 700, inst.warna);
        tks(C, x0+w/2, y0+265*s, b2, 34*s, fam, 700, inst.warna); } }; } },
- { id:"tuban", nama:"Tuban", tab:"single", fam:"condensed", warna:"#ffffff",
-   geo(s, inst){ const d=D(), lok=lokAkt(), fam=inst.font||"condensed";
+ { id:"tuban", nama:"Tuban", tab:"single", fam:"tulis", warna:"#ffffff",
+   geo(s, inst){ const d=D(), lok=lokAkt();
      const baris = [["DISTANCE", d.km2+" KM"], ["SPEED", d.kec1+" KM/H"], ["TIME", d.w2]];
      const adaLok = !!lok.kota;
      const w = 560*s, h = (3*92 + 2*14 + (adaLok ? 112 : 0))*s;
@@ -1193,10 +1193,10 @@ STK.push(
        baris.forEach(([lb, v])=>{
          C.save(); C.fillStyle="#ffffff"; jejakBulat(C,{x:x0,y,w,h:92*s},18*s); C.fill(); C.restore();
          tks(C, x0+24*s, y+46*s, lb, 20*s, "sans", 800, "#fc4c02", "left", 2*s);
-         tks(C, x0+w-24*s, y+46*s, v, 62*s, fam, 700, "#141414", "right"); y += 106*s; });
+         tks(C, x0+w-24*s, y+48*s, v, 72*s, inst.font||"tulis", 700, "#141414", "right"); y += 106*s; });
        if(adaLok){
-         tks(C, x0+w/2, y+28*s, lok.kota, 54*s, fam, 700, inst.warna);
-         tks(C, x0+w/2, y+76*s, lok.daerah, 24*s, fam, 700, inst.warna, "center", 4*s); } } }; } },
+         tks(C, x0+w/2, y+28*s, lok.kota, 54*s, "condensed", 700, inst.warna);
+         tks(C, x0+w/2, y+76*s, lok.daerah, 24*s, "condensed", 700, inst.warna, "center", 4*s); } } }; } },
  { id:"cyclingKm", nama:"Cycling Kilometers", tab:"single", fam:"condensed", warna:"#b8e62e",
    geo(s, inst){ const d=D(), dt=dtAkt(), fam=inst.font||"condensed", lime=inst.warna;
      const tgl = BLN_EN[dt.getMonth()].slice(0,3).toUpperCase()+" "+dt.getDate()+", "+dt.getFullYear();
