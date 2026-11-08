@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Overlay Ride — Template Overlay Strava</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Anton&family=Playfair+Display:ital,wght@1,500;1,700&family=Space+Mono:wght@400;700&family=Caveat:wght@600;700&family=Poppins:wght@500;700;800&family=Bebas+Neue&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Anton&family=Playfair+Display:ital,wght@1,500;1,700&family=Space+Mono:wght@400;700&family=Caveat:wght@600;700&family=Shadows+Into+Light&family=Poppins:wght@500;700;800&family=Bebas+Neue&display=swap" rel="stylesheet">
 <link href="https://fonts.cdnfonts.com/css/komika-axis" rel="stylesheet">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -680,7 +680,7 @@ function gambarPR(cx, cy, skala, kiri){
 }
 /* ================= STIKER (galeri ala Pursuit Tag) ================= */
 const titik = (n, d=1)=> (n||0).toFixed(d);
-const FAMS = ["condensed","serif","mono","tulis","sans"];
+const FAMS = ["condensed","serif","mono","tulis","sil","sans"];
 const PALET = { putih:"#ffffff", hitam:"#141414", oranye:"#fc4c02", kuning:"#ffd60a",
   lime:"#b8e62e", biru:"#2f7bff", merah:"#ff3b30", hijau:"#4ade80", ungu:"#7b2ff7" };
 function fnt(px, fam, wgt){
@@ -688,6 +688,7 @@ function fnt(px, fam, wgt){
   if(fam==="serif") return "italic 700 "+px+"px 'Playfair Display', Georgia, serif";
   if(fam==="mono") return (wgt||700)+" "+px+"px 'Space Mono', monospace";
   if(fam==="tulis") return "700 "+px+"px Caveat, cursive";
+  if(fam==="sil") return (wgt||700)+" "+px+"px 'Shadows Into Light', cursive";
   if(fam==="poppins") return (wgt||700)+" "+px+"px Poppins, Arial, sans-serif";
   if(fam==="bebas") return px+"px 'Bebas Neue', 'Arial Narrow', sans-serif";
   return (wgt||700)+" "+px+"px Montserrat, Arial, sans-serif";
@@ -1184,7 +1185,7 @@ STK.push(
          C.beginPath(); C.moveTo(x0+20*s, y0+150*s); C.lineTo(x0+680*s, y0+150*s); C.stroke(); C.restore(); }
        tks(C, x0+w/2, y0+215*s, b1, 34*s, fam, 700, inst.warna);
        tks(C, x0+w/2, y0+265*s, b2, 34*s, fam, 700, inst.warna); } }; } },
- { id:"tuban", nama:"Tuban", tab:"single", fam:"tulis", warna:"#ffffff",
+ { id:"tuban", nama:"Tuban", tab:"single", fam:"sil", warna:"#ffffff",
    geo(s, inst){ const d=D(), lok=lokAkt();
      const baris = [["DISTANCE", d.km2+" KM"], ["SPEED", d.kec1+" KM/H"], ["TIME", d.w2]];
      const adaLok = !!lok.kota;
@@ -1193,7 +1194,11 @@ STK.push(
        baris.forEach(([lb, v])=>{
          C.save(); C.fillStyle="#ffffff"; jejakBulat(C,{x:x0,y,w,h:92*s},18*s); C.fill(); C.restore();
          tks(C, x0+24*s, y+46*s, lb, 20*s, "sans", 800, "#fc4c02", "left", 2*s);
-         tks(C, x0+w-24*s, y+48*s, v, 72*s, inst.font||"tulis", 700, "#141414", "right"); y += 106*s; });
+         /* angka oversize + tebal: font 110 di chip 92, stroke biar gemuk */
+         C.save(); C.font = fnt(110*s, inst.font||"sil", 700); C.textBaseline="middle"; C.textAlign="right";
+         C.lineWidth = 5*s; C.lineJoin="round"; C.strokeStyle="#141414";
+         C.strokeText(v, x0+w-4*s, y+48*s); C.fillStyle="#141414"; C.fillText(v, x0+w-4*s, y+48*s); C.restore();
+         y += 106*s; });
        if(adaLok){
          tks(C, x0+w/2, y+28*s, lok.kota, 54*s, "condensed", 700, inst.warna);
          tks(C, x0+w/2, y+76*s, lok.daerah, 24*s, "condensed", 700, inst.warna, "center", 4*s); } } }; } },
