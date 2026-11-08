@@ -1191,6 +1191,8 @@ STK.push(
      const adaLok = !!lok.kota;
      const w = 560*s, h = (3*92 + 2*14 + (adaLok ? 112 : 0))*s;
      return { w, h, draw(C,x0,y0){ let y = y0;
+       /* stiker ini flat seperti aslinya: matikan drop shadow bawaan */
+       C.save(); C.shadowColor="transparent"; C.shadowBlur=0; C.shadowOffsetX=0; C.shadowOffsetY=0;
        baris.forEach(([lb, v])=>{
          C.save(); C.fillStyle="#ffffff"; jejakBulat(C,{x:x0,y,w,h:92*s},18*s); C.fill(); C.restore();
          tks(C, x0+24*s, y+46*s, lb, 20*s, "sans", 800, "#fc4c02", "left", 2*s);
@@ -1201,7 +1203,8 @@ STK.push(
          y += 106*s; });
        if(adaLok){
          tks(C, x0+w/2, y+28*s, lok.kota, 54*s, "condensed", 700, inst.warna);
-         tks(C, x0+w/2, y+76*s, lok.daerah, 24*s, "condensed", 700, inst.warna, "center", 4*s); } } }; } },
+         tks(C, x0+w/2, y+76*s, lok.daerah, 24*s, "condensed", 700, inst.warna, "center", 4*s); }
+       C.restore(); } }; } },
  { id:"cyclingKm", nama:"Cycling Kilometers", tab:"single", fam:"condensed", warna:"#b8e62e",
    geo(s, inst){ const d=D(), dt=dtAkt(), fam=inst.font||"condensed", lime=inst.warna;
      const tgl = BLN_EN[dt.getMonth()].slice(0,3).toUpperCase()+" "+dt.getDate()+", "+dt.getFullYear();
