@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Absensi Manasik Haji CJH Tuban 2027</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background: #f2f5f3; color: #1c2b24; line-height: 1.5; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 16px 12px 60px; }
+  header { background: #0d7a4f; color: #fff; border-radius: 14px; padding: 20px 18px; margin-bottom: 14px; }
+  header h1 { font-size: 20px; line-height: 1.3; }
+  header p { opacity: .9; font-size: 13px; margin-top: 4px; }
+  .stats { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+  .stat { background: rgba(255,255,255,.14); border-radius: 10px; padding: 8px 12px; font-size: 13px; }
+  .stat b { font-size: 17px; display: block; }
+  .card { background: #fff; border-radius: 14px; padding: 14px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+  .sessions { display: flex; gap: 6px; flex-wrap: wrap; }
+  .sess { flex: 1 1 30%; min-width: 90px; border: 2px solid #dfe7e2; background: #fff; border-radius: 10px; padding: 8px 6px; text-align: center; cursor: pointer; font-size: 13px; }
+  .sess b { display: block; font-size: 18px; }
+  .sess.active { border-color: #0d7a4f; background: #e6f4ec; }
+  .sess small { color: #5b6b62; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  input[type="text"], input[type="search"], select { font-size: 15px; padding: 10px 12px; border: 1.5px solid #cfd8d2; border-radius: 10px; background: #fff; width: 100%; }
+  .search { flex: 1 1 100%; }
+  .filter { flex: 1 1 45%; }
+  .btn { font-size: 14px; padding: 10px 14px; border-radius: 10px; border: none; cursor: pointer; background: #0d7a4f; color: #fff; }
+  .btn.ghost { background: #eef2ef; color: #1c2b24; border: 1.5px solid #cfd8d2; }
+  .btn:disabled { opacity: .55; cursor: default; }
+  .meta { font-size: 13px; color: #5b6b62; }
+  .person { display: flex; gap: 12px; align-items: flex-start; background: #fff; border-radius: 12px; padding: 12px; margin-bottom: 8px; box-shadow: 0 1px 2px rgba(0,0,0,.05); }
+  .person.present { background: #e9f6ee; }
+  .person input[type="checkbox"] { width: 26px; height: 26px; margin-top: 2px; accent-color: #0d7a4f; flex-shrink: 0; cursor: pointer; }
+  .person .info { flex: 1; min-width: 0; }
+  .person .nama { font-weight: 700; font-size: 15px; }
+  .person .bin { font-size: 13px; color: #5b6b62; }
+  .person .det { font-size: 13px; color: #33463b; margin-top: 2px; word-break: break-word; }
+  .badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 20px; margin-left: 6px; vertical-align: middle; }
+  .badge.urut { background: #dbeafe; color: #1e40af; }
+  .badge.cad { background: #fef3c7; color: #92400e; }
+  .pager { display: flex; gap: 8px; align-items: center; justify-content: center; margin-top: 10px; }
+  .pager button { padding: 8px 14px; border-radius: 8px; border: 1.5px solid #cfd8d2; background: #fff; cursor: pointer; font-size: 14px; }
+  .pager button:disabled { opacity: .45; cursor: default; }
+  .hidden { display: none !important; }
+  .err { background: #fdecea; color: #7a1f1a; border: 1px solid #f5c6c2; border-radius: 10px; padding: 10px 12px; font-size: 14px; margin-bottom: 12px; }
+  .ok { background: #e6f4ec; color: #14532d; border: 1px solid #bfe3cc; border-radius: 10px; padding: 10px 12px; font-size: 14px; margin-bottom: 12px; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .form-grid .full { grid-column: 1 / -1; }
+  label { font-size: 12px; color: #5b6b62; display: block; margin-bottom: 3px; }
+  .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid #cfd8d2; border-top-color: #0d7a4f; border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: -3px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .foot { text-align: center; font-size: 12px; color: #7a8a80; margin-top: 18px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Absensi Manasik Haji CJH Tuban 2027</h1>
+    <p>Centang nama yang hadir. Centangan tersimpan bersama — semua yang buka link ini melihat data yang sama.</p>
+    <div class="stats">
+      <div class="stat"><b id="stTotal">–</b>Total nama</div>
+      <div class="stat"><b id="stUrut">–</b>Urut</div>
+      <div class="stat"><b id="stCad">–</b>Cadangan</div>
+      <div class="stat"><b id="stKec">–</b>Kecamatan</div>
+    </div>
+  </header>
+
+  <div id="errBox" class="err hidden"></div>
+  <div id="okBox" class="ok hidden"></div>
+
+  <div class="card">
+    <div class="row" style="margin-bottom:10px">
+      <div style="flex:1"><strong>Pilih pertemuan</strong> <span class="meta">(yang dicentang = pertemuan ini)</span></div>
+      <button class="btn ghost" id="btnRefresh" type="button">Refresh</button>
+    </div>
+    <div class="sessions" id="sessions"></div>
+    <div class="meta" id="lastUpd" style="margin-top:8px"></div>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <div class="search"><input id="q" type="search" placeholder="Cari nama, nomor porsi, kelurahan, kecamatan, alamat..." autocomplete="off"></div>
+      <div class="filter">
+        <select id="fStatus">
+          <option value="all">Status: Semua</option>
+          <option value="Urut">Urut</option>
+          <option value="Cadangan">Cadangan</option>
+        </select>
+      </div>
+      <div class="filter">
+        <select id="fKec"><option value="all">Kecamatan: Semua</option></select>
+      </div>
+      <div class="filter">
+        <select id="fHadir">
+          <option value="all">Kehadiran: Semua</option>
+          <option value="hadir">Hanya yang hadir</option>
+          <option value="belum">Hanya yang belum hadir</option>
+        </select>
+      </div>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn" id="btnAdd" type="button">+ Tambah nama manual</button>
+      <button class="btn ghost" id="btnCsv" type="button">Unduh CSV</button>
+      <span class="meta" id="countInfo"></span>
+    </div>
+  </div>
+
+  <div class="card hidden" id="addCard">
+    <strong>Tambah nama manual</strong>
+    <div class="form-grid" style="margin-top:10px">
+      <div class="full"><label>Nama *</label><input id="aNama" type="text" placeholder="Nama jemaah"></div>
+      <div><label>Nama bin / ayah</label><input id="aBin" type="text" placeholder="Nama ayah"></div>
+      <div><label>Nomor porsi</label><input id="aPorsi" type="text" placeholder="Nomor porsi"></div>
+      <div class="full"><label>Alamat</label><input id="aAlamat" type="text" placeholder="Alamat"></div>
+      <div><label>Kelurahan</label><input id="aKel" type="text" placeholder="Kelurahan"></div>
+      <div><label>Kecamatan</label><input id="aKec" type="text" placeholder="Kecamatan"></div>
+      <div>
+        <label>Status</label>
+        <select id="aStatus"><option>Urut</option><option>Cadangan</option></select>
+      </div>
+      <div style="display:flex;align-items:flex-end;gap:8px">
+        <button class="btn" id="btnAddSave" type="button">Simpan</button>
+        <button class="btn ghost" id="btnAddCancel" type="button">Batal</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="loading" class="card" style="text-align:center"><span class="spinner"></span> Memuat data...</div>
+  <div id="list"></div>
+  <div class="pager hidden" id="pager">
+    <button id="pgPrev" type="button">‹ Sebelumnya</button>
+    <span class="meta" id="pgInfo"></span>
+    <button id="pgNext" type="button">Berikutnya ›</button>
+  </div>
+
+  <div class="foot">Data tersimpan di Spreadsheet "Absensi Manasik Haji CJH Tuban 2027". Centangan diperbarui otomatis tiap 30 detik.</div>
+</div>
+
+<script>
+var API = "https://script.google.com/macros/s/AKfycby_ivaoPN_lQYJldxdP8Jz1XwsAuCCaggaWv3IEJORvAQj20ce5BRU3T00qV-ugJKjp/exec";
+var S = { people: [], session: 1, q: "", status: "all", kec: "all", hadir: "all", page: 1, per: 50, loading: false, last: null };
+var POLL_MS = 30000, pollTimer = null;
+
+function el(id){ return document.getElementById(id); }
+function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+function showErr(m){ var b = el("errBox"); b.textContent = m; b.classList.remove("hidden"); }
+function hideErr(){ el("errBox").classList.add("hidden"); }
+function showOk(m){ var b = el("okBox"); b.textContent = m; b.classList.remove("hidden"); setTimeout(function(){ b.classList.add("hidden"); }, 4000); }
+
+function apiGet(params){
+  var qs = Object.keys(params).map(function(k){ return encodeURIComponent(k) + "=" + encodeURIComponent(params[k]); }).join("&");
+  return fetch(API + "?" + qs).then(function(r){ if(!r.ok) throw new Error("HTTP " + r.status); return r.json(); });
+}
+
+function loadRoster(showLoading){
+  if (showLoading) { el("loading").classList.remove("hidden"); }
+  return apiGet({ action: "roster" }).then(function(d){
+    if(!d || !d.ok) throw new Error("Data tidak valid");
+    S.people = d.people || [];
+    S.last = new Date();
+    el("loading").classList.add("hidden");
+    hideErr();
+    buildKecFilter();
+    render();
+  }).catch(function(err){
+    el("loading").classList.add("hidden");
+    showErr("Gagal memuat data: " + err.message + ". Cek koneksi lalu tekan Refresh.");
+  });
+}
+
+function buildKecFilter(){
+  var sel = el("fKec");
+  var cur = sel.value || "all";
+  var set = {};
+  S.people.forEach(function(p){ if(p.kec) set[p.kec] = true; });
+  var list = Object.keys(set).sort();
+  sel.innerHTML = '<option value="all">Kecamatan: Semua</option>' + list.map(function(k){ return '<option value="' + esc(k) + '">' + esc(k) + '</option>'; }).join("");
+  sel.value = list.indexOf(cur) >= 0 ? cur : "all";
+}
+
+function summary(){
+  var out = [];
+  for (var s = 1; s <= 5; s++){
+    var t = 0, u = 0, c = 0;
+    S.people.forEach(function(p){
+      if (p.att && p.att[s-1]) { t++; if (p.status === "Urut") u++; else if (p.status === "Cadangan") c++; }
+    });
+    out.push({ s: s, total: t, urut: u, cad: c });
+  }
+  return out;
+}
+
+function renderSessions(){
+  var sum = summary();
+  el("sessions").innerHTML = sum.map(function(x){
+    return '<button type="button" class="sess' + (S.session === x.s ? ' active' : '') + '" data-s="' + x.s + '">' +
+      'Pertemuan ' + x.s + '<b>' + x.total + '</b><small>hadir &nbsp;·&nbsp; Urut ' + x.urut + ' &nbsp;·&nbsp; Cad ' + x.cad + '</small></button>';
+  }).join("");
+  Array.prototype.forEach.call(document.querySelectorAll(".sess"), function(b){
+    b.onclick = function(){ S.session = Number(b.getAttribute("data-s")); S.page = 1; renderSessions(); render(); };
+  });
+}
+
+function filtered(){
+  var q = S.q.trim().toLowerCase();
+  return S.people.filter(function(p){
+    if (S.status !== "all" && p.status !== S.status) return false;
+    if (S.kec !== "all" && p.kec !== S.kec) return false;
+    var h = !!(p.att && p.att[S.session-1]);
+    if (S.hadir === "hadir" && !h) return false;
+    if (S.hadir === "belum" && h) return false;
+    if (q){
+      var hay = [p.nama, p.bin, p.porsi, p.alamat, p.kel, p.kec].join(" ").toLowerCase();
+      if (hay.indexOf(q) === -1) return false;
+    }
+    return true;
+  });
+}
+
+function render(){
+  var sum = summary();
+  var tot = S.people.length;
+  var ur = S.people.filter(function(p){ return p.status === "Urut"; }).length;
+  var ca = S.people.filter(function(p){ return p.status === "Cadangan"; }).length;
+  var kecN = new Set(S.people.map(function(p){ return p.kec; }).filter(Boolean)).size;
+  el("stTotal").textContent = tot;
+  el("stUrut").textContent = ur;
+  el("stCad").textContent = ca;
+  el("stKec").textContent = kecN;
+  renderSessions();
+  if (S.last){
+    var d = S.last;
+    var hh = String(d.getHours()).padStart(2,"0"), mm = String(d.getMinutes()).padStart(2,"0"), ss = String(d.getSeconds()).padStart(2,"0");
+    el("lastUpd").textContent = "Terakhir diperbarui: " + hh + ":" + mm + ":" + ss + " · otomatis refresh tiap 30 detik";
+  }
+  var list = filtered();
+  var pages = Math.max(1, Math.ceil(list.length / S.per));
+  if (S.page > pages) S.page = pages;
+  var start = (S.page - 1) * S.per;
+  var slice = list.slice(start, start + S.per);
+  var hadirNow = list.filter(function(p){ return p.att && p.att[S.session-1]; }).length;
+  el("countInfo").textContent = "Menampilkan " + (list.length ? start + 1 : 0) + "–" + Math.min(start + S.per, list.length) + " dari " + list.length + " nama · " + hadirNow + " hadir di Pertemuan " + S.session;
+  var html = "";
+  slice.forEach(function(p){
+    var h = !!(p.att && p.att[S.session-1]);
+    var badge = p.status === "Urut" ? '<span class="badge urut">URUT</span>' : '<span class="badge cad">CADANGAN</span>';
+    html += '<div class="person' + (h ? ' present' : '') + '">' +
+      '<input type="checkbox" data-no="' + p.no + '"' + (h ? ' checked' : '') + ' aria-label="Hadir">' +
+      '<div class="info"><div class="nama">' + esc(p.nama) + badge + '</div>' +
+      '<div class="bin">' + (p.bin ? "bin " + esc(p.bin) : "") + '</div>' +
+      '<div class="det">Porsi: ' + esc(p.porsi || "-") + ' &nbsp;·&nbsp; ' + esc(p.kel || "-") + ', ' + esc(p.kec || "-") + '</div>' +
+      '<div class="det">' + esc(p.alamat || "") + '</div></div></div>';
+  });
+  if (!slice.length) html = '<div class="card" style="text-align:center;color:#5b6b62">Tidak ada nama yang cocok. Coba ubah pencarian atau filter.</div>';
+  el("list").innerHTML = html;
+  Array.prototype.forEach.call(document.querySelectorAll('#list input[type="checkbox"]'), function(cb){
+    cb.onchange = function(){ toggleOne(Number(cb.getAttribute("data-no")), cb.checked, cb); };
+  });
+  var pg = el("pager");
+  if (list.length > S.per) { pg.classList.remove("hidden"); } else { pg.classList.add("hidden"); }
+  el("pgInfo").textContent = "Halaman " + S.page + " / " + pages;
+  el("pgPrev").disabled = S.page <= 1;
+  el("pgNext").disabled = S.page >= pages;
+}
+
+function toggleOne(no, value, cb){
+  var p = null;
+  for (var i = 0; i < S.people.length; i++){ if (S.people[i].no === no){ p = S.people[i]; break; } }
+  if (!p) return;
+  var prev = !!(p.att && p.att[S.session-1]);
+  p.att[S.session-1] = value;
+  renderSessions(); render();
+  apiGet({ action: "set", no: no, session: S.session, value: value ? "true" : "false" }).then(function(d){
+    if (!d || !d.ok) throw new Error("Gagal menyimpan");
+  }).catch(function(err){
+    p.att[S.session-1] = prev;
+    if (cb) cb.checked = prev;
+    renderSessions(); render();
+    showErr("Gagal menyimpan centangan (" + err.message + "). Coba lagi.");
+  });
+}
+
+function csvCell(v){
+  v = String(v == null ? "" : v);
+  return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+}
+function exportCsv(){
+  var head = ["NO","NAMA","BIN","NO PORSI","ALAMAT","KELURAHAN","KECAMATAN","STATUS","PERTEMUAN 1","PERTEMUAN 2","PERTEMUAN 3","PERTEMUAN 4","PERTEMUAN 5"];
+  var lines = [head.join(",")];
+  S.people.forEach(function(p){
+    var row = [p.no, p.nama, p.bin, p.porsi, p.alamat, p.kel, p.kec, p.status];
+    for (var s = 0; s < 5; s++) row.push(p.att && p.att[s] ? "Hadir" : "");
+    lines.push(row.map(csvCell).join(","));
+  });
+  var blob = new Blob(["\ufeff" + lines.join("\n")], { type: "text/csv;charset=utf-8" });
+  var a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "absensi-manasik-cjh-tuban-2027.csv";
+  document.body.appendChild(a); a.click(); a.remove();
+}
+
+function startPoll(){
+  if (pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(function(){ loadRoster(false); }, POLL_MS);
+}
+
+document.addEventListener("DOMContentLoaded", function(){
+  var qTimer = null;
+  el("q").addEventListener("input", function(){
+    clearTimeout(qTimer);
+    qTimer = setTimeout(function(){ S.q = el("q").value; S.page = 1; render(); }, 250);
+  });
+  el("fStatus").addEventListener("change", function(){ S.status = el("fStatus").value; S.page = 1; render(); });
+  el("fKec").addEventListener("change", function(){ S.kec = el("fKec").value; S.page = 1; render(); });
+  el("fHadir").addEventListener("change", function(){ S.hadir = el("fHadir").value; S.page = 1; render(); });
+  el("pgPrev").addEventListener("click", function(){ if (S.page > 1){ S.page--; render(); window.scrollTo({top: 0, behavior: "smooth"}); } });
+  el("pgNext").addEventListener("click", function(){ S.page++; render(); window.scrollTo({top: 0, behavior: "smooth"}); });
+  el("btnRefresh").addEventListener("click", function(){ loadRoster(true); });
+  el("btnCsv").addEventListener("click", exportCsv);
+  el("btnAdd").addEventListener("click", function(){ el("addCard").classList.remove("hidden"); el("aNama").focus(); });
+  el("btnAddCancel").addEventListener("click", function(){ el("addCard").classList.add("hidden"); });
+  el("btnAddSave").addEventListener("click", function(){
+    var nama = el("aNama").value.trim();
+    if (!nama){ showErr("Nama wajib diisi."); return; }
+    var btn = el("btnAddSave"); btn.disabled = true;
+    var params = { action: "add", nama: nama, bin: el("aBin").value.trim(), porsi: el("aPorsi").value.trim(),
+      alamat: el("aAlamat").value.trim(), kel: el("aKel").value.trim(), kec: el("aKec").value.trim(),
+      status: el("aStatus").value };
+    apiGet(params).then(function(d){
+      if (!d || !d.ok) throw new Error("Gagal menambah");
+      ["aNama","aBin","aPorsi","aAlamat","aKel","aKec"].forEach(function(id){ el(id).value = ""; });
+      el("addCard").classList.add("hidden");
+      showOk("Nama berhasil ditambahkan.");
+      return loadRoster(false);
+    }).catch(function(err){ showErr("Gagal menambah nama: " + err.message); })
+    .finally(function(){ btn.disabled = false; });
+  });
+  loadRoster(true);
+  startPoll();
+});
+</script>
+</body>
+</html>
