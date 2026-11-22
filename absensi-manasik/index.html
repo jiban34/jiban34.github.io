@@ -16,8 +16,9 @@
   .stat b { font-size: 17px; display: block; }
   .card { background: #fff; border-radius: 14px; padding: 14px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
   .sessions { display: flex; gap: 6px; flex-wrap: wrap; }
-  .sess { flex: 1 1 30%; min-width: 90px; border: 2px solid #dfe7e2; background: #fff; border-radius: 10px; padding: 8px 6px; text-align: center; cursor: pointer; font-size: 13px; }
+  .sess { flex: 1 1 18%; min-width: 100px; border: 2px solid #dfe7e2; background: #fff; border-radius: 10px; padding: 8px 6px; text-align: center; cursor: pointer; font-size: 13px; }
   .sess b { display: block; font-size: 18px; }
+  .sess .dt { display: block; font-size: 12px; color: #0d7a4f; font-weight: 600; }
   .sess.active { border-color: #0d7a4f; background: #e6f4ec; }
   .sess small { color: #5b6b62; }
   .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
@@ -138,6 +139,7 @@
 
 <script>
 var API = "https://script.google.com/macros/s/AKfycby_ivaoPN_lQYJldxdP8Jz1XwsAuCCaggaWv3IEJORvAQj20ce5BRU3T00qV-ugJKjp/exec";
+var DATES = { 1: "Rabu, 13 Jan 2027", 2: "Rabu, 20 Jan 2027", 3: "Rabu, 27 Jan 2027", 4: "Rabu, 3 Feb 2027", 5: "Ahad, 14 Mar 2027" };
 var S = { people: [], session: 1, q: "", status: "all", kec: "all", hadir: "all", page: 1, per: 50, loading: false, last: null };
 var POLL_MS = 30000, pollTimer = null;
 
@@ -194,7 +196,7 @@ function renderSessions(){
   var sum = summary();
   el("sessions").innerHTML = sum.map(function(x){
     return '<button type="button" class="sess' + (S.session === x.s ? ' active' : '') + '" data-s="' + x.s + '">' +
-      'Pertemuan ' + x.s + '<b>' + x.total + '</b><small>hadir &nbsp;·&nbsp; Urut ' + x.urut + ' &nbsp;·&nbsp; Cad ' + x.cad + '</small></button>';
+      'Pertemuan ' + x.s + '<span class="dt">' + DATES[x.s] + '</span><b>' + x.total + '</b><small>hadir &nbsp;·&nbsp; Urut ' + x.urut + ' &nbsp;·&nbsp; Cad ' + x.cad + '</small></button>';
   }).join("");
   Array.prototype.forEach.call(document.querySelectorAll(".sess"), function(b){
     b.onclick = function(){ S.session = Number(b.getAttribute("data-s")); S.page = 1; renderSessions(); render(); };
