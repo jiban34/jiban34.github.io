@@ -56,6 +56,18 @@
   .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid #cfd8d2; border-top-color: #0d7a4f; border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: -3px; }
   @keyframes spin { to { transform: rotate(360deg); } }
   .foot { text-align: center; font-size: 12px; color: #7a8a80; margin-top: 18px; }
+  .modal { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; z-index: 50; padding: 16px; }
+  .modal .box { background: #fff; border-radius: 16px; padding: 24px 20px; width: 100%; max-width: 340px; text-align: center; box-shadow: 0 8px 30px rgba(0,0,0,.25); }
+  .modal .lock { width: 64px; height: 64px; border-radius: 50%; background: #0d7a4f; color: #fff; font-size: 30px; line-height: 64px; margin: 0 auto 10px; }
+  .pinrow { display: flex; gap: 10px; justify-content: center; margin: 16px 0; }
+  .pinrow input { width: 52px; height: 56px; font-size: 26px; text-align: center; border: 1.5px solid #cfd8d2; border-radius: 12px; }
+  .pinrow input:focus { border-color: #0d7a4f; outline: none; }
+  .pinerr { color: #b91c1c; font-size: 13px; min-height: 18px; margin-bottom: 6px; }
+  .authbtn { font-size: 13px; padding: 9px 12px; border-radius: 10px; border: none; cursor: pointer; background: #0d7a4f; color: #fff; white-space: nowrap; }
+  .authbtn.out { background: #eef2ef; color: #1c2b24; border: 1.5px solid #cfd8d2; }
+  .statusmark { width: 26px; flex-shrink: 0; text-align: center; font-size: 20px; font-weight: 700; color: #0d7a4f; margin-top: 2px; }
+  .statusmark.no { color: #c9d2cc; font-weight: 400; }
+  .tasview { flex-shrink: 0; font-size: 18px; padding-top: 4px; min-width: 24px; text-align: center; }
 </style>
 </head>
 <body>
@@ -81,6 +93,7 @@
   <div class="card">
     <div class="row" style="margin-bottom:10px">
       <div style="flex:1"><strong>Pilih pertemuan</strong> <span class="meta">(yang dicentang = pertemuan ini)</span></div>
+      <button class="authbtn" id="btnAuth" type="button">Login Panitia</button>
       <button class="btn ghost" id="btnRefresh" type="button">Refresh</button>
     </div>
     <div class="sessions" id="sessions"></div>
@@ -153,9 +166,29 @@
   <div class="foot">Data tersimpan di Spreadsheet "Absensi Manasik Haji CJH Tuban 2027". Centangan diperbarui otomatis tiap 30 detik.</div>
 </div>
 
+<div class="modal hidden" id="pinModal">
+  <div class="box">
+    <div class="lock">🔒</div>
+    <strong style="font-size:17px">Login Panitia</strong>
+    <div class="meta" style="margin-top:4px">Masukkan PIN untuk mengabsen dan menandai tas.</div>
+    <div class="pinrow">
+      <input type="text" inputmode="numeric" autocomplete="off" maxlength="1">
+      <input type="text" inputmode="numeric" autocomplete="off" maxlength="1">
+      <input type="text" inputmode="numeric" autocomplete="off" maxlength="1">
+      <input type="text" inputmode="numeric" autocomplete="off" maxlength="1">
+    </div>
+    <div class="pinerr" id="pinErr"></div>
+    <button class="btn" id="pinMasuk" type="button" style="width:100%">Masuk</button>
+    <button class="btn ghost" id="pinBatal" type="button" style="width:100%;margin-top:8px">Batal</button>
+  </div>
+</div>
+
 <script>
 var API = "https://script.google.com/macros/s/AKfycby_ivaoPN_lQYJldxdP8Jz1XwsAuCCaggaWv3IEJORvAQj20ce5BRU3T00qV-ugJKjp/exec";
 var DATES = { 1: "Rabu, 13 Jan 2027", 2: "Rabu, 20 Jan 2027", 3: "Rabu, 27 Jan 2027", 4: "Rabu, 3 Feb 2027", 5: "Ahad, 14 Mar 2027" };
+var PIN = "2027";
+var authed = false;
+try { authed = localStorage.getItem("absensi_auth") === "1"; } catch (e) {}
 var S = { people: [], session: 1, q: "", status: "all", kec: "all", hadir: "all", tas: "all", page: 1, per: 50, loading: false, last: null };
 var POLL_MS = 30000, pollTimer = null;
 
@@ -266,13 +299,23 @@ function render(){
   slice.forEach(function(p){
     var h = !!(p.att && p.att[S.session-1]);
     var badge = p.status === "Urut" ? '<span class="badge urut">URUT</span>' : '<span class="badge cad">CADANGAN</span>';
-    html += '<div class="person' + (h ? ' present' : '') + '">' +
+    if (authed) {
+      html += '<div class="person' + (h ? ' present' : '') + '">' +
       '<input type="checkbox" data-no="' + p.no + '"' + (h ? ' checked' : '') + ' aria-label="Hadir">' +
       '<div class="info"><div class="nama">' + esc(p.nama) + badge + '</div>' +
       '<div class="bin">' + (p.bin ? "bin " + esc(p.bin) : "") + '</div>' +
       '<div class="det">Porsi: ' + esc(p.porsi || "-") + ' &nbsp;·&nbsp; ' + esc(p.kel || "-") + ', ' + esc(p.kec || "-") + '</div>' +
       '<div class="det">' + esc(p.alamat || "") + '</div></div>' +
       '<label class="tasbox' + (p.tas ? ' got' : '') + '"><input type="checkbox" class="tas" data-no="' + p.no + '"' + (p.tas ? ' checked' : '') + ' aria-label="Tas"><span>🎒 Tas</span></label></div>';
+    } else {
+      html += '<div class="person' + (h ? ' present' : '') + '">' +
+      '<div class="statusmark' + (h ? '' : ' no') + '">' + (h ? '✓' : '–') + '</div>' +
+      '<div class="info"><div class="nama">' + esc(p.nama) + badge + '</div>' +
+      '<div class="bin">' + (p.bin ? "bin " + esc(p.bin) : "") + '</div>' +
+      '<div class="det">Porsi: ' + esc(p.porsi || "-") + ' &nbsp;·&nbsp; ' + esc(p.kel || "-") + ', ' + esc(p.kec || "-") + '</div>' +
+      '<div class="det">' + esc(p.alamat || "") + '</div></div>' +
+      '<div class="tasview">' + (p.tas ? '🎒' : '') + '</div></div>';
+    }
   });
   if (!slice.length) html = '<div class="card" style="text-align:center;color:#5b6b62">Tidak ada nama yang cocok. Coba ubah pencarian atau filter.</div>';
   el("list").innerHTML = html;
@@ -343,6 +386,43 @@ function exportCsv(){
   document.body.appendChild(a); a.click(); a.remove();
 }
 
+function updateAuthUI(){
+  var b = el("btnAuth");
+  if (authed) { b.textContent = "Keluar"; b.classList.add("out"); }
+  else { b.textContent = "Login Panitia"; b.classList.remove("out"); }
+  el("btnAdd").style.display = authed ? "" : "none";
+  render();
+}
+function openPin(){
+  el("pinModal").classList.remove("hidden");
+  el("pinErr").textContent = "";
+  var inputs = document.querySelectorAll(".pinrow input");
+  inputs.forEach(function(i){ i.value = ""; });
+  inputs[0].focus();
+}
+function closePin(){ el("pinModal").classList.add("hidden"); }
+function doLogin(){
+  var v = "";
+  document.querySelectorAll(".pinrow input").forEach(function(i){ v += i.value; });
+  if (v === PIN) {
+    authed = true;
+    try { localStorage.setItem("absensi_auth", "1"); } catch (e) {}
+    closePin();
+    updateAuthUI();
+    showOk("Login berhasil. Mode panitia aktif.");
+  } else {
+    el("pinErr").textContent = "PIN salah, coba lagi.";
+    document.querySelectorAll(".pinrow input").forEach(function(i){ i.value = ""; });
+    document.querySelectorAll(".pinrow input")[0].focus();
+  }
+}
+function doLogout(){
+  authed = false;
+  try { localStorage.removeItem("absensi_auth"); } catch (e) {}
+  el("addCard").classList.add("hidden");
+  updateAuthUI();
+}
+
 function startPoll(){
   if (pollTimer) clearInterval(pollTimer);
   pollTimer = setInterval(function(){ loadRoster(false); }, POLL_MS);
@@ -361,6 +441,24 @@ document.addEventListener("DOMContentLoaded", function(){
   el("pgPrev").addEventListener("click", function(){ if (S.page > 1){ S.page--; render(); window.scrollTo({top: 0, behavior: "smooth"}); } });
   el("pgNext").addEventListener("click", function(){ S.page++; render(); window.scrollTo({top: 0, behavior: "smooth"}); });
   el("btnRefresh").addEventListener("click", function(){ loadRoster(true); });
+  el("btnAuth").addEventListener("click", function(){ if (authed) doLogout(); else openPin(); });
+  el("pinMasuk").addEventListener("click", doLogin);
+  el("pinBatal").addEventListener("click", closePin);
+  el("pinModal").addEventListener("click", function(e){ if (e.target === el("pinModal")) closePin(); });
+  (function(){
+    var inputs = document.querySelectorAll(".pinrow input");
+    inputs.forEach(function(inp, idx){
+      inp.addEventListener("input", function(){
+        inp.value = inp.value.replace(/\D/g, "").slice(0, 1);
+        if (inp.value && idx < inputs.length - 1) inputs[idx + 1].focus();
+        if (idx === inputs.length - 1 && inp.value) doLogin();
+      });
+      inp.addEventListener("keydown", function(e){
+        if (e.key === "Backspace" && !inp.value && idx > 0) inputs[idx - 1].focus();
+        if (e.key === "Enter") doLogin();
+      });
+    });
+  })();
   el("btnCsv").addEventListener("click", exportCsv);
   el("btnAdd").addEventListener("click", function(){ el("addCard").classList.remove("hidden"); el("aNama").focus(); });
   el("btnAddCancel").addEventListener("click", function(){ el("addCard").classList.add("hidden"); });
@@ -380,6 +478,7 @@ document.addEventListener("DOMContentLoaded", function(){
     }).catch(function(err){ showErr("Gagal menambah nama: " + err.message); })
     .finally(function(){ btn.disabled = false; });
   });
+  updateAuthUI();
   loadRoster(true);
   startPoll();
 });
