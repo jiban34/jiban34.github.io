@@ -264,7 +264,7 @@ function filtered(){
     if (S.tas === "sudah" && !t) return false;
     if (S.tas === "belum" && t) return false;
     if (q){
-      var hay = [p.nama, p.bin, p.porsi, p.alamat, p.kel, p.kec].join(" ").toLowerCase();
+      var hay = [p.nama, p.porsi, p.alamat, p.kel, p.kec].join(" ").toLowerCase();
       if (hay.indexOf(q) === -1) return false;
     }
     return true;
